@@ -26,6 +26,7 @@ public class BookStatisticsView extends BarChart<String, Number> {
 	}
 	
 	public void updateStatisticsList(List<BookStatistic> bookStatistics) {
+		this.getData().clear();
 		ObservableList<XYChart.Data<String, Number>> intermediate = FXCollections.synchronizedObservableList(FXCollections.observableList(new ArrayList<XYChart.Data<String, Number>>()));
 		for(int i=0 ; i < bookStatistics.size() ; i++) {
 			intermediate.add(new XYChart.Data<>(bookStatistics.get(i).getName(),bookStatistics.get(i).getNumberOfBorrowings()));
