@@ -31,6 +31,9 @@ public class BookStatisticsView extends BarChart<String, Number> {
 			intermediate.add(new XYChart.Data<>(bookStatistics.get(i).getName(),bookStatistics.get(i).getNumberOfBorrowings()));
 		}
 		setObservableStatisticsList(intermediate);
+		XYChart.Series<String, Number> serie = new XYChart.Series<String, Number>();
+		serie.getData().addAll(observableStatisticsList);
+		this.getData().add(serie);
 	}
 
 	public ObservableList<XYChart.Data<String,Number>> getObservableStatisticsList() {
