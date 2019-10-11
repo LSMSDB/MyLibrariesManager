@@ -18,12 +18,15 @@ public class BookStatisticsView extends BarChart<String, Number> {
 		this.getXAxis().setLabel("Books");
 		this.getYAxis().setLabel("Number of Borrowings");
 		this.setTitle("Most borrowed books");
+		
 		setObservableStatisticsList(FXCollections.synchronizedObservableList(FXCollections.observableList(new ArrayList<XYChart.Data<String, Number>>())));
+		XYChart.Series<String, Number> serie = new XYChart.Series<String, Number>();
+		serie.getData().addAll(observableStatisticsList);
+		this.getData().add(serie);
 	}
 	
 	public void updateStatisticsList(List<BookStatistic> bookStatistics) {
 		ObservableList<XYChart.Data<String, Number>> intermediate = FXCollections.synchronizedObservableList(FXCollections.observableList(new ArrayList<XYChart.Data<String, Number>>()));
-		intermediate.clear();
 		for(int i=0 ; i < bookStatistics.size() ; i++) {
 			intermediate.add(new XYChart.Data<>(bookStatistics.get(i).getName(),bookStatistics.get(i).getNumberOfBorrowings()));
 		}
