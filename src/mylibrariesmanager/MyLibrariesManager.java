@@ -19,7 +19,7 @@ import javafx.stage.*;
 public class MyLibrariesManager extends Application {
     // private LibraryCatalogView libraryCatalog;
     // private UserBorrowingsView userBorrowings;
-    // private BookStatisticsView bookStatistics
+    private BookStatisticsView bookStatistics;
     private Map<String, ComboBox> selectionMenu;
     private Map<String, TextField> createAccountField;
     private Map<String, Button> actionButton;
@@ -90,22 +90,17 @@ public class MyLibrariesManager extends Application {
     }
     
     private HBox buildStatisticsSection(){
-        // bookStatistics = new BookStatisticsView();
+        bookStatistics = new BookStatisticsView();
         descriptiveLabel.put("Most borrowed books", new Label("Most borrowed books"));
         selectionMenu.put("Select genre", new ComboBox());
         descriptiveLabel.put("Select genre", new Label("Select a genre"));
-        
-        VBox statisticsDiagramVBox = new VBox(15);
-        statisticsDiagramVBox.setAlignment(Pos.CENTER);
-        statisticsDiagramVBox.getChildren().addAll(descriptiveLabel.get("Most borrowed books")/*, bookStatistics*/);
-        
+            
         VBox selectGenreVBox = new VBox(15);
         selectGenreVBox.setAlignment(Pos.CENTER);
         selectGenreVBox.getChildren().addAll(descriptiveLabel.get("Select genre"),
                                              selectionMenu.get("Select genre"));
         
-        
-        return new HBox(150,statisticsDiagramVBox, selectGenreVBox);
+        return new HBox(150,bookStatistics, selectGenreVBox);
     }
     
     private void setCreateAccountEvent(){
@@ -259,8 +254,7 @@ public class MyLibrariesManager extends Application {
             Genre selectedGenre = (Genre) selectionMenu.get("Select genre").getValue();
             
             if (selectedLibrary != null)
-                System.out.println("PROVA");
-               //bookStatistics.updateStatisticsList(LibrariesArchive.retrieveMostBorrowedBooks(selecteLibrary, selectedGenre);
+                bookStatistics.updateStatisticsList(null);//LibrariesArchive.retrieveMostBorrowedBooks(selecteLibrary, selectedGenre);
          }); 
     }
     
@@ -312,7 +306,6 @@ public class MyLibrariesManager extends Application {
         actionButton = new HashMap<>();
         descriptiveLabel = new HashMap<>();
         
-
         interfaceVBox.getChildren().addAll(new HBox(150, buildCreateAccountSection(), buildUserAccountSection()),
                                            buildMyBorrowingsSection(),
                                            buildLibraryCatalogSection(),
