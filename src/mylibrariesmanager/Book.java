@@ -7,17 +7,17 @@ public class Book {
     private final SimpleStringProperty title;
     private final SimpleStringProperty author;
     private final SimpleStringProperty edition;
-    private final SimpleIntegerProperty available;
+    private final SimpleBooleanProperty available;
     private final Genre genre;
   
     public Book(int id, String title, String author, String edition,
-                int available, Genre genre){
+                boolean available, Genre genre){
         
         this.id = new SimpleIntegerProperty(id);
         this.title = new SimpleStringProperty(title);
         this.author = new SimpleStringProperty(author);
         this.edition = new SimpleStringProperty(edition);
-        this.available = new SimpleIntegerProperty(available);
+        this.available = new SimpleBooleanProperty(available);
         this.genre = genre;
     }
     
@@ -37,7 +37,7 @@ public class Book {
         return edition.get();
     }
     
-    public int getAvailable(){
+    public boolean getAvailable(){
         return available.get();
     }
     

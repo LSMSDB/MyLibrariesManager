@@ -8,16 +8,13 @@ public class Library {
     private final SimpleStringProperty name;
     private final SimpleStringProperty address;
     private final List<Book> catalog;
-    private final List<BookStatistic> bookStatistics;
     
-    public Library(int id, String name, String address, List<Book> catalog, 
-                   List<BookStatistic> bookStatistics){
+    public Library(int id, String name, String address, List<Book> catalog){
         
         this.id = new SimpleIntegerProperty(id);
         this.name = new SimpleStringProperty(name);
         this.address = new SimpleStringProperty(address);
         this.catalog = catalog;
-        this.bookStatistics = bookStatistics;
     }
     
     public int getId(){
@@ -34,10 +31,6 @@ public class Library {
     
     public List<Book> getCatalog(){
         return catalog;
-    }
-    
-    public List<BookStatistic> getBookStatistics(){
-        return bookStatistics;
     }
     
 }
