@@ -258,7 +258,7 @@ public class LibrariesArchive {
 	
 	
 	
-	public List<Borrowing> retrieveBorrowings(int idUser) {
+	private List<Borrowing> retrieveBorrowings(int idUser) {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
@@ -296,7 +296,7 @@ public class LibrariesArchive {
 		return borrowings;
 	}
 	
-	public List<Book> retrieveBooks(int idLibrary) {
+	private List<Book> retrieveBooks(int idLibrary) {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
@@ -330,7 +330,7 @@ public class LibrariesArchive {
 		return books;
 	}
 	
-	public Book retrieveBook(int idBook) {
+	private Book retrieveBook(int idBook) {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
@@ -362,7 +362,7 @@ public class LibrariesArchive {
 		return book;
 	}
 	
-	public Genre retrieveGenre(int idGenre) {
+	private Genre retrieveGenre(int idGenre) {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
