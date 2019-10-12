@@ -18,7 +18,8 @@ public class LocalConfigurationParameters {
 	private static String addressDBMS;
 	private static String portDBMS;
 	
-	public static void retrieveLocalConfiguration() {
+	public static boolean retrieveLocalConfiguration() {
+		boolean bool;
 		Document document;
 		Schema schema;
 		String configurationFileXML = "configuration.xml";
@@ -44,11 +45,15 @@ public class LocalConfigurationParameters {
 	         document = null;
 	    }
 		
-		if (document == null)
-			System.exit(1);
+		if (document == null) //there is at least an exception
+			bool = false;
+		else { //no exception caught
+			setAddressDBMS(document.getElementsByTagName("addressDBMS").item(0).getTextContent());
+			setPortDBMS(document.getElementsByTagName("portDBMS").item(0).getTextContent());
+			bool = true;
+		}
 		
-		setAddressDBMS(document.getElementsByTagName("addressDBMS").item(0).getTextContent());
-		setPortDBMS(document.getElementsByTagName("portDBMS").item(0).getTextContent());
+		return bool;
 	}
 
 	public static String getAddressDBMS() {
