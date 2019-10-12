@@ -258,7 +258,64 @@ public class LibrariesArchive {
 	
 	
 	
-	private List<Borrowing> retrieveBorrowings(int idUser) {
+	public List<Book> retrieveMostBorrowedBooks() {
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+ 		ResultSet resultSet = null;
+ 		
+		List<Book> books = new ArrayList<Book>();
+		List<List<Integer>> mostBorrowedBooks = new ArrayList<List<Integer>>();
+		
+		for (int i = 0; i < 10; i++) {
+			List<Integer> mostBorrowedBook = new ArrayList<Integer>();
+			mostBorrowedBook.add(0);
+			mostBorrowedBook.add(0);
+			mostBorrowedBooks.add(mostBorrowedBook);
+		}
+		
+		try {
+			connection = initializeConnection();
+			preparedStatement = connection.prepareStatement("select * from book");
+			resultSet = preparedStatement.executeQuery();
+ 
+ 			while(resultSet.next()) { 
+ 				
+ 				int idBook = resultSet.getInt("id");			
+ 				int numberBorrowing = countBorrowing(idBook);
+ 				boolean mostPopular = false;
+ 				
+ 				if (numberBorrowing > mostBorrowedBooks.get(9).get(1)) {
+ 					int k = 0;
+ 					while (!mostPopular) {
+	 					if (numberBorrowing > mostBorrowedBooks.get(k).get(1)) {
+	 						List<Integer> bookPopular = new ArrayList<Integer>();
+	 						bookPopular.add(idBook);
+	 						bookPopular.add(numberBorrowing);
+	 						mostPopular = true;
+	 						
+	 						mostBorrowedBooks.add(k, bookPopular);
+	 					}
+	 					k++;
+	 				}
+ 				}
+ 			}
+ 		}
+ 		catch(SQLException e) {
+ 			e.printStackTrace();
+ 		}
+		
+		for (int j = 0; j < 10; j++) {
+			if (mostBorrowedBooks.get(j).get(0) != 0) {
+				Book b = retrieveBook(mostBorrowedBooks.get(j).get(0));
+				books.add(b);
+			}
+		}
+		return books;
+	}
+	
+	
+	
+ 	private List<Borrowing> retrieveBorrowings(int idUser) {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
@@ -387,5 +444,27 @@ public class LibrariesArchive {
 		return genre;
 	}
 	
+	private int countBorrowing(int idBook) {
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		int affectedRows = 0;
+		
+		try {
+			connection = initializeConnection();
+			preparedStatement = connection.prepareStatement("select * from borrowing where id_book = ?");
+			preparedStatement.setInt(1, idBook); 
+			rs = preparedStatement.executeQuery();
+			
+			if (rs != null) {
+				rs.last();
+				affectedRows = rs.getRow();
+			}
+ 		}
+ 		catch(SQLException e) {
+ 			e.printStackTrace();
+ 		}
+		return affectedRows;		
+	}
 	
 }
