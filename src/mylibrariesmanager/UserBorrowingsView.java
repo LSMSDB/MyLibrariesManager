@@ -10,6 +10,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 public class UserBorrowingsView extends TableView<Borrowing> {
+  private ObservableList<Borrowing> observableBorrowing;
+  
+  
   public UserBorrowingsView() {
     super(FXCollections.observableArrayList());
     
@@ -31,16 +34,14 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     this.getColumns().add(column1);
     this.getColumns().add(column2);
     this.getColumns().add(column3);
-    this.getColumns().add(column4);
-    
+    this.getColumns().add(column4);   
   }
   
-  public void updateBookList(List<Borrowing> borrowingList) {
-    this.getItems().clear();
+  public void updateBorrowingList(List<Borrowing> borrowingList) {
+    observableBorrowing.clear();
     
     ObservableList<Borrowing> data = FXCollections.observableArrayList(borrowingList);
     
-    this.setItems(data);
+    observableBorrowing.addAll(data);
   }
-
 }

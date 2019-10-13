@@ -1,7 +1,6 @@
 package mylibrariesmanager;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javafx.collections.FXCollections;
@@ -16,7 +15,9 @@ public class LibraryCatalogView extends TableView<Book> {
   
   
   public LibraryCatalogView() {
-    super(FXCollections.observableArrayList());
+    super();
+    
+    observableBookList = FXCollections.observableArrayList();
     
     TableColumn<Book, String> column1 = new TableColumn<>("Title");
     column1.setCellValueFactory(new PropertyValueFactory<>("title"));
@@ -38,13 +39,14 @@ public class LibraryCatalogView extends TableView<Book> {
     this.getColumns().add(column3);
     this.getColumns().add(column4);
     
+    this.setItems(observableBookList);
   }
   
-  public void updateBookList(List<Book> bookList) {
-    this.getItems().clear();
+  public void updateBookList(List<Book> bookList) {    
+    observableBookList.clear();
     
     ObservableList<Book> data = FXCollections.observableArrayList(bookList);
     
-    this.setItems(data);
+    observableBookList.addAll(data);
   }
 }
