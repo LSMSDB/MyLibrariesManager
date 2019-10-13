@@ -71,7 +71,7 @@ public class MyLibrariesManager extends Application {
         renewReturnVBox.setAlignment(Pos.CENTER);
         renewReturnVBox.getChildren().addAll(actionButton.get("Renew book"), actionButton.get("Return book"));
         
-        return new HBox(renewReturnVBox);
+        return new HBox(100, userBorrowings, renewReturnVBox);
     }
     
     private HBox buildLibraryCatalogSection(){
@@ -86,7 +86,7 @@ public class MyLibrariesManager extends Application {
                                               selectionMenu.get("Select library"),
                                               actionButton.get("Borrow book"));
         
-        return new HBox(selectBorrowVBox);
+        return new HBox(100, libraryCatalog, selectBorrowVBox);
     }
     
     private HBox buildStatisticsSection(){
@@ -100,7 +100,7 @@ public class MyLibrariesManager extends Application {
         selectGenreVBox.getChildren().addAll(descriptiveLabel.get("Select genre"),
                                              selectionMenu.get("Select genre"));
         
-        return new HBox(150,bookStatistics, selectGenreVBox);
+        return new HBox(100,bookStatistics, selectGenreVBox);
     }
     
     private void setCreateAccountEvent(){
@@ -294,7 +294,10 @@ public class MyLibrariesManager extends Application {
     }
     
     public void start(Stage stage){
-        // LocalConfigurationParameters.retrieveLocalConfiguration();
+        if (!LocalConfigurationParameters.retrieveLocalConfiguration()){
+            errorMessage("An error occured when parsing the configuration file");
+            return;
+        }
         // LibrariesArchive.initializeConnection();
         // CHECK IF AN ERROR OCCURRED IN BOTH THE FUNCTIONS --> IF SO, ABORT THE APP
               
