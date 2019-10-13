@@ -53,4 +53,8 @@ public class User {
         return borrowings;
     }
     
+    public String toString(){
+        return id.get() + name.get() + surname.get();
+    }
+    
 }

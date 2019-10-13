@@ -19,4 +19,8 @@ public class Genre {
         return name.get();
     }
     
+    public String toString(){
+        return name.get();
+    }
+    
 }

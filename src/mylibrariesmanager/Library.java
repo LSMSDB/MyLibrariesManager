@@ -33,4 +33,8 @@ public class Library {
         return catalog;
     }
     
+    public String toString(){
+        return name.get() + address.get();
+    }
+    
 }
