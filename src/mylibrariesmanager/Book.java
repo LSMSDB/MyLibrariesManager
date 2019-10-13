@@ -45,4 +45,11 @@ public class Book {
         return genre;
     }
     
+    public StringProperty nameProperty(){
+      return title;
+    }
+    
+    public StringProperty authorProperty(){
+      return author;
+    }
 }

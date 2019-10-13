@@ -2,12 +2,15 @@ package mylibrariesmanager;
 
 import java.util.List;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.util.Callback;
 
 public class UserBorrowingsView extends TableView<Borrowing> {
   private ObservableList<Borrowing> observableBorrowing;
@@ -17,10 +20,24 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     super(FXCollections.observableArrayList());
     
     TableColumn<Borrowing, String> column1 = new TableColumn<>("Title");
-    column1.setCellValueFactory(new PropertyValueFactory<>("title"));
+    
+    column1.setCellValueFactory(new Callback<CellDataFeatures<Borrowing, String>, 
+        ObservableValue<String>>() {  
+      @Override  
+      public ObservableValue<String> call(CellDataFeatures<Borrowing, String> data){  
+        return data.getValue().getBook().nameProperty();  
+      }  
+    });
     
     TableColumn<Borrowing, String> column2 = new TableColumn<>("Author");
-    column2.setCellValueFactory(new PropertyValueFactory<>("author"));
+    
+    column2.setCellValueFactory(new Callback<CellDataFeatures<Borrowing, String>, 
+        ObservableValue<String>>() {  
+      @Override  
+      public ObservableValue<String> call(CellDataFeatures<Borrowing, String> data){  
+        return data.getValue().getBook().authorProperty();  
+      }  
+    });
     
     TableColumn<Borrowing, String> column3 = new TableColumn<>("Borrowing Date");
     column2.setCellValueFactory(new PropertyValueFactory<>("borrowingDate"));

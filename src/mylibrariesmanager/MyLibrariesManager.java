@@ -137,7 +137,7 @@ public class MyLibrariesManager extends Application {
          
         selectionMenu.get("Select user").setOnAction((Event event)->{
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            //userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+            userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
          });   
     }
     
@@ -156,7 +156,7 @@ public class MyLibrariesManager extends Application {
     private void setRenewBookEvent(){
         actionButton.get("Renew book").setOnAction((ActionEvent event)->{
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            Borrowing selectedBorrowing = null; // = userBorrowings.getSelectionModel().getSelectedItem();
+            Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
             
             if (selectedUser != null && selectedBorrowing != null){
                 if (!selectedBorrowing.getReturnDate().isEmpty())
@@ -183,7 +183,7 @@ public class MyLibrariesManager extends Application {
     private void setReturnBookEvent(){
         actionButton.get("Return book").setOnAction((ActionEvent event)->{
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            Borrowing selectedBorrowing = null; // = userBorrowings.getSelectionModel().getSelectedItem();
+            Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
             
             if (selectedUser != null && selectedBorrowing != null){
                 if (!selectedBorrowing.getReturnDate().isEmpty())
@@ -212,7 +212,7 @@ public class MyLibrariesManager extends Application {
          
         selectionMenu.get("Select library").setOnAction((Event event)->{
             Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            //libraryCatalog.updateBookList(selectedLibrary.getCatalog());
+            libraryCatalog.updateBookList(selectedLibrary.getCatalog());
          }); 
     }
     
@@ -220,7 +220,7 @@ public class MyLibrariesManager extends Application {
         actionButton.get("Borrow book").setOnAction((ActionEvent event)->{
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
             Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            Book selectedBook = null; // = libraryCatalog.getSelectionModel().getSelectedItem();
+            Book selectedBook = libraryCatalog.getSelectionModel().getSelectedItem();
             
             if (selectedUser != null && selectedLibrary != null && selectedBook != null){
                 if (!selectedBook.getAvailable())
