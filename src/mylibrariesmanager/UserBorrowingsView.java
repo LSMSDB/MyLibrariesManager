@@ -42,10 +42,10 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     });
     
     TableColumn<Borrowing, String> column3 = new TableColumn<>("Borrowing Date");
-    column2.setCellValueFactory(new PropertyValueFactory<>("borrowingDate"));
+    column3.setCellValueFactory(new PropertyValueFactory<>("borrowingDate"));
     
     TableColumn<Borrowing, String> column4 = new TableColumn<>("Expiration Date");
-    column2.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+    column4.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
     
     
     this.setPlaceholder(new Label("No rows to display"));
@@ -53,7 +53,9 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     this.getColumns().add(column1);
     this.getColumns().add(column2);
     this.getColumns().add(column3);
-    this.getColumns().add(column4);   
+    this.getColumns().add(column4);
+    
+    this.setItems(observableBorrowingList);
   }
   
    private void setLayout(){

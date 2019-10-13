@@ -309,14 +309,19 @@ public class MyLibrariesManager extends Application {
         actionButton = new HashMap<>();
         descriptiveLabel = new HashMap<>();
         
-        interfaceVBox.getChildren().addAll(new HBox(150, buildCreateAccountSection(), buildUserAccountSection()),
-                                           buildMyBorrowingsSection(),
-                                           buildLibraryCatalogSection(),
-                                           buildStatisticsSection());
+        interfaceVBox.getChildren().addAll(
+            new HBox(
+                150,
+                buildCreateAccountSection(),
+                buildUserAccountSection()),
+                buildMyBorrowingsSection(),
+                buildLibraryCatalogSection(),
+                buildStatisticsSection()
+            );
         
         setComponentsLayout();
         setInterfaceEvents();
-                       
+        
         ScrollPane scrollRoot = new ScrollPane(new Group(interfaceVBox));
         stage.setScene(new Scene(scrollRoot));
         stage.setTitle("MyLibrariesManager");

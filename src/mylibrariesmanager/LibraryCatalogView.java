@@ -27,10 +27,10 @@ public class LibraryCatalogView extends TableView<Book> {
     column2.setCellValueFactory(new PropertyValueFactory<>("author"));
     
     TableColumn<Book, String> column3 = new TableColumn<>("Genre");
-    column2.setCellValueFactory(new PropertyValueFactory<>("genre"));
+    column3.setCellValueFactory(new PropertyValueFactory<>("genre"));
     
     TableColumn<Book, String> column4 = new TableColumn<>("Availability");
-    column2.setCellValueFactory(new PropertyValueFactory<>("available"));
+    column4.setCellValueFactory(new PropertyValueFactory<>("available"));
     
     
     this.setPlaceholder(new Label("No rows to display"));
