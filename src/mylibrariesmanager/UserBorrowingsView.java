@@ -13,11 +13,13 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback;
 
 public class UserBorrowingsView extends TableView<Borrowing> {
-  private ObservableList<Borrowing> observableBorrowing;
+  private ObservableList<Borrowing> observableBorrowingList;
   
   
   public UserBorrowingsView() {
-    super(FXCollections.observableArrayList());
+    super();
+    setLayout();
+    observableBorrowingList = FXCollections.observableArrayList();
     
     TableColumn<Borrowing, String> column1 = new TableColumn<>("Title");
     
@@ -54,11 +56,13 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     this.getColumns().add(column4);   
   }
   
+   private void setLayout(){
+    setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    setMinSize(600,200);
+  }
+  
   public void updateBorrowingList(List<Borrowing> borrowingList) {
-    observableBorrowing.clear();
-    
-    ObservableList<Borrowing> data = FXCollections.observableArrayList(borrowingList);
-    
-    observableBorrowing.addAll(data);
+    observableBorrowingList.clear();
+    observableBorrowingList.addAll(borrowingList);
   }
 }

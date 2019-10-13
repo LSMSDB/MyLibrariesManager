@@ -16,6 +16,7 @@ public class LibraryCatalogView extends TableView<Book> {
   
   public LibraryCatalogView() {
     super();
+    setLayout();
     
     observableBookList = FXCollections.observableArrayList();
     
@@ -42,11 +43,13 @@ public class LibraryCatalogView extends TableView<Book> {
     this.setItems(observableBookList);
   }
   
+  private void setLayout(){
+    setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+     setMinSize(600,200);
+  }
+  
   public void updateBookList(List<Book> bookList) {    
     observableBookList.clear();
-    
-    ObservableList<Book> data = FXCollections.observableArrayList(bookList);
-    
-    observableBookList.addAll(data);
+    observableBookList.addAll(bookList);
   }
 }
