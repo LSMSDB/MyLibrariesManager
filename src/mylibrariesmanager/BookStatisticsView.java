@@ -11,7 +11,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 
 public class BookStatisticsView extends BarChart<String, Number> {
-	private ObservableList<XYChart.Data<String,Number>> observableStatisticsList;
+  private ObservableList<XYChart.Data<String,Number>> observableStatisticsList;
 	
 	public BookStatisticsView() {
 		super(new CategoryAxis(), new NumberAxis());
