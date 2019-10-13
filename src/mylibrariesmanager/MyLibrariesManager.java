@@ -17,8 +17,8 @@ import javafx.stage.*;
 
 
 public class MyLibrariesManager extends Application {
-    // private LibraryCatalogView libraryCatalog;
-    // private UserBorrowingsView userBorrowings;
+    private LibraryCatalogView libraryCatalog;
+    private UserBorrowingsView userBorrowings;
     private BookStatisticsView bookStatistics;
     private Map<String, ComboBox> selectionMenu;
     private Map<String, TextField> createAccountField;
@@ -63,7 +63,7 @@ public class MyLibrariesManager extends Application {
     }
     
     private HBox buildMyBorrowingsSection(){
-        //userBorrowings = new UserBorrowingsView();
+        userBorrowings = new UserBorrowingsView();
         actionButton.put("Renew book", new Button("Renew the selected book"));
         actionButton.put("Return book", new Button("Return the selected book"));
         
@@ -75,7 +75,7 @@ public class MyLibrariesManager extends Application {
     }
     
     private HBox buildLibraryCatalogSection(){
-        // libraryCatalog = new LibraryCatalogView();
+        libraryCatalog = new LibraryCatalogView();
         selectionMenu.put("Select library", new ComboBox());
         descriptiveLabel.put("Select library", new Label("Select a library"));
         actionButton.put("Borrow book", new Button("Borrow the selected book"));
