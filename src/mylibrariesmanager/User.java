@@ -54,7 +54,7 @@ public class User {
     }
     
     public String toString(){
-        return id.get() + name.get() + surname.get();
+        return id.get() + " " + name.get() + " " + surname.get();
     }
     
 }

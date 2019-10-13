@@ -34,7 +34,7 @@ public class Library {
     }
     
     public String toString(){
-        return name.get() + address.get();
+        return name.get() + " " + address.get();
     }
     
 }
