@@ -13,34 +13,35 @@ import java.util.Date;
 import java.util.List;
 
 public class LibrariesArchive {
+	private static Connection archiveConnection;
 	
-	public static Connection initializeConnection() {
-		Connection con = null;
-		String url = "jdbc:mysql://localhost:3306/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
-		String username = "root";
-		String password = "root";
+	public LibrariesArchive() {
+		if (LocalConfigurationParameters.retrieveLocalConfiguration()) {
+			Connection con = null;
+			String url = "jdbc:mysql://" + LocalConfigurationParameters.getAddressDBMS() + ":" + LocalConfigurationParameters.getPortDBMS() + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
+			String username = "root";
+			String password = "root";
 
-		try {
 			try {
-				Class.forName("com.mysql.cj.jdbc.Driver");
-			} catch (ClassNotFoundException e) {
+				try {
+					Class.forName("com.mysql.cj.jdbc.Driver");
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+				con = DriverManager.getConnection(url, username, password);
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			con = DriverManager.getConnection(url, username, password);
-		} catch (Exception e) {
-			e.printStackTrace();
+			LibrariesArchive.archiveConnection = con;
 		}
-		return con;
 	}
 	
-	public void addUser(User u) {
-		Connection connection = null;
+	public static boolean addUser(User u) {
 		PreparedStatement preparedStatement = null;
 		
 		try {
- 			connection = initializeConnection();
  			String selectSQL = "INSERT INTO user (name, surname, address, email, phone) VALUES (?, ?, ?, ?, ?)";
- 			preparedStatement = connection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+ 			preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
  			preparedStatement.setString(1, u.getName());
  			preparedStatement.setString(2, u.getSurname());
  			preparedStatement.setString(3, u.getAddress());
@@ -50,23 +51,25 @@ public class LibrariesArchive {
  			int affectedRows = preparedStatement.executeUpdate();
 
  	        if (affectedRows == 0) {
- 	            throw new SQLException("Creating user failed, no rows affected.");
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
  	        }
  		}
  		catch(SQLException ex) {
  			ex.printStackTrace();
  		}
+		return false;
 	}
 	
-	public List<User> retrieveUsers() {
-		Connection connection = null;
+	public static List<User> retrieveUsers() {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
 		List<User> users = new ArrayList<User>();
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from user");
+			preparedStatement = archiveConnection.prepareStatement("select * from user");
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
@@ -90,34 +93,38 @@ public class LibrariesArchive {
 		return users;
 	}
 	
-	public void deleteUser(User u) {
-		Connection connection = null;
+	public static boolean deleteUser(User u) {
 		PreparedStatement preparedStatement = null;
 		
 		try {
-			connection = initializeConnection();
- 			preparedStatement = connection.prepareStatement("delete from user WHERE id = ?");
+ 			preparedStatement = archiveConnection.prepareStatement("delete from user WHERE id = ?");
  			preparedStatement.setInt(1, u.getId());
- 			preparedStatement.executeUpdate();
+ 			int affectedRows = preparedStatement.executeUpdate();
+
+ 	        if (affectedRows == 0) {
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
+ 	        }			
 			
  		}
  		catch(SQLException e) {
  			e.printStackTrace();
  		}
+		return false;
 	}
 	
 	
 	
-	public List<Library> retrieveLibraries() {
-		Connection connection = null;
+	public static List<Library> retrieveLibraries() {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		List<Library> libraries = new ArrayList<Library>();
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from library");
+			preparedStatement = archiveConnection.prepareStatement("select * from library");
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
@@ -141,11 +148,10 @@ public class LibrariesArchive {
 	
 	
 	
-	public void addBorrowing(User user, Borrowing borrowing) {
-		Connection connection = null;
+	public static boolean addBorrowing(User user, Borrowing borrowing) {
+		
 		PreparedStatement preparedStatement = null;
 		try {
- 			connection = initializeConnection();
  			
  			SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
  			Date sdf_borrowingDate = new java.sql.Date(sdf.parse(borrowing.getBorrowingDate()).getTime());
@@ -153,7 +159,7 @@ public class LibrariesArchive {
  			Date sdf_expirationDate = new java.sql.Date(sdf.parse(borrowing.getExpirationDate()).getTime());
 			
  			String selectSQL = "INSERT INTO borrowing (id_user, id_book, borrowing_date, return_date, expiration_date) VALUES (?, ?, ?, ?, ?)";
- 			preparedStatement = connection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+ 			preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
  			preparedStatement.setInt(1, user.getId());
  			preparedStatement.setInt(2, borrowing.getBook().getId());
  			preparedStatement.setDate(3, (java.sql.Date) sdf_borrowingDate);
@@ -163,7 +169,10 @@ public class LibrariesArchive {
  			int affectedRows = preparedStatement.executeUpdate();
 
  	        if (affectedRows == 0) {
- 	            throw new SQLException("Creating user failed, no rows affected.");
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
  	        }
  		}
  		catch(SQLException ex) {
@@ -172,27 +181,29 @@ public class LibrariesArchive {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
-	public void endBorrowing(Borrowing borrowing) {
-		Connection connection = null;
+	public static boolean endBorrowing(Borrowing borrowing) {
 		PreparedStatement preparedStatement = null;
 		
 		try {
- 			connection = initializeConnection();
  			
  			SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
  			Date sdf_returnDate = new java.sql.Date(sdf.parse(borrowing.getReturnDate()).getTime());
  			
  			String selectSQL = "UPDATE borrowing SET return_date = ? WHERE id = ?";
- 			preparedStatement = connection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+ 			preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
  			preparedStatement.setDate(1, (java.sql.Date) sdf_returnDate);
  			preparedStatement.setInt(2, borrowing.getId());
  			
  			int affectedRows = preparedStatement.executeUpdate();
 
  	        if (affectedRows == 0) {
- 	            throw new SQLException("Creating user failed, no rows affected.");
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
  	        }
  		}
  		catch(SQLException ex) {
@@ -201,24 +212,29 @@ public class LibrariesArchive {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
-	public void renewBorrowing(Borrowing borrowing) {
-		Connection connection = null;
+	public boolean renewBorrowing(Borrowing borrowing) {
 		PreparedStatement preparedStatement = null;
 		
 		try {
- 			connection = initializeConnection();
- 			
  			SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
  			Date sdf_expirationDate = new java.sql.Date(sdf.parse(borrowing.getExpirationDate()).getTime());
  			
  			String selectSQL = "UPDATE borrowing SET expiration_date = ? WHERE id = ?";
- 			preparedStatement = connection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+ 			preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
  			preparedStatement.setDate(1, (java.sql.Date) sdf_expirationDate);
  			preparedStatement.setInt(2, borrowing.getId());
  			
- 			preparedStatement.executeUpdate();
+ 			int affectedRows = preparedStatement.executeUpdate();
+
+ 	        if (affectedRows == 0) {
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
+ 	        }
  		}
  		catch(SQLException ex) {
  			ex.printStackTrace();
@@ -226,20 +242,19 @@ public class LibrariesArchive {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
 	
 	
-	public List<Genre> retrieveGenres() {
-		Connection connection = null;
+	public static  List<Genre> retrieveGenres() {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		List<Genre> genres = new ArrayList<Genre>();
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from genre");
+			preparedStatement = archiveConnection.prepareStatement("select * from genre");
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
@@ -258,8 +273,7 @@ public class LibrariesArchive {
 	
 	
 	
-	public List<Book> retrieveMostBorrowedBooks() {
-		Connection connection = null;
+	public static List<Book> retrieveMostBorrowedBooks() {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
@@ -274,8 +288,7 @@ public class LibrariesArchive {
 		}
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from book");
+			preparedStatement = archiveConnection.prepareStatement("select * from book");
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
@@ -315,16 +328,14 @@ public class LibrariesArchive {
 	
 	
 	
- 	private List<Borrowing> retrieveBorrowings(int idUser) {
-		Connection connection = null;
+ 	private static List<Borrowing> retrieveBorrowings(int idUser) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		List<Borrowing> borrowings = new ArrayList<Borrowing>();
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from borrowing where id_user = ?");
+			preparedStatement = archiveConnection.prepareStatement("select * from borrowing where id_user = ?");
 			preparedStatement.setInt(1, idUser);
 			resultSet = preparedStatement.executeQuery();
  
@@ -353,16 +364,14 @@ public class LibrariesArchive {
 		return borrowings;
 	}
 	
-	private List<Book> retrieveBooks(int idLibrary) {
-		Connection connection = null;
+	private static List<Book> retrieveBooks(int idLibrary) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
  		List<Book> books = new ArrayList<Book>();
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from book where id_library = ?");
+			preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ?");
 			preparedStatement.setInt(1, idLibrary);
 			resultSet = preparedStatement.executeQuery();
  
@@ -387,16 +396,14 @@ public class LibrariesArchive {
 		return books;
 	}
 	
-	private Book retrieveBook(int idBook) {
-		Connection connection = null;
+	private static Book retrieveBook(int idBook) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		Book book = null;
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from book where id = ?");
+			preparedStatement = archiveConnection.prepareStatement("select * from book where id = ?");
 			preparedStatement.setInt(1, idBook);
 			resultSet = preparedStatement.executeQuery();
  
@@ -419,16 +426,14 @@ public class LibrariesArchive {
 		return book;
 	}
 	
-	private Genre retrieveGenre(int idGenre) {
-		Connection connection = null;
+	private static Genre retrieveGenre(int idGenre) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		Genre genre = null;
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from genre where id = ?");
+			preparedStatement = archiveConnection.prepareStatement("select * from genre where id = ?");
 			preparedStatement.setInt(1, idGenre);
 			resultSet = preparedStatement.executeQuery();
  
@@ -444,15 +449,13 @@ public class LibrariesArchive {
 		return genre;
 	}
 	
-	private int countBorrowing(int idBook) {
-		Connection connection = null;
+	private static int countBorrowing(int idBook) {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		int affectedRows = 0;
 		
 		try {
-			connection = initializeConnection();
-			preparedStatement = connection.prepareStatement("select * from borrowing where id_book = ?");
+			preparedStatement = archiveConnection.prepareStatement("select * from borrowing where id_book = ?");
 			preparedStatement.setInt(1, idBook); 
 			rs = preparedStatement.executeQuery();
 			
