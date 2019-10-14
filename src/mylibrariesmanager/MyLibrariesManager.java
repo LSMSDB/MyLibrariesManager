@@ -123,8 +123,8 @@ public class MyLibrariesManager extends Application {
                                         createAccountField.get("Email").getText(),
                                         createAccountField.get("Phone").getText(),
                                         null);
-                //if (!LibrariesArchive.addUser(newUser))
-                //        errorMessage("An error occurred while creating the account. Please try again");
+                if (!LibrariesArchive.addUser(newUser))
+                    errorMessage("An error occurred while creating the account. Please try again");
             }
         });
     }
@@ -132,12 +132,13 @@ public class MyLibrariesManager extends Application {
     private void setSelectUserEvent(){
         selectionMenu.get("Select user").setOnShowing((Event event)->{
             selectionMenu.get("Select user").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
-            selectionMenu.get("Select user").setItems(FXCollections.observableArrayList(/*LibrariesArchive.retrieveUsers()*/));
+            selectionMenu.get("Select user").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveUsers()));
         });
          
         selectionMenu.get("Select user").setOnAction((Event event)->{
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+            if ( selectedUser != null )
+                userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
          });   
     }
     
@@ -146,8 +147,8 @@ public class MyLibrariesManager extends Application {
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
             
             if (selectedUser != null ){
-                //LibrariesArchive.deleteUser(selectedUser);
-                // CHECK FOR ERRORS
+                if (!LibrariesArchive.deleteUser(selectedUser))
+                    errorMessage("An error occurred while deleting the account. Please try again");
             }else
                  errorMessage("Please select your account from the list");
         });
@@ -173,9 +174,10 @@ public class MyLibrariesManager extends Application {
                                                            selectedBorrowing.getReturnDate(),
                                                            expirationDate);
                 
-                //LibrariesArchive.renewBorrowing(renewedBorrowing);
-                // CHECK ERRORS
-                // IF NO ERRORS, UPLOAD BORROWINGS TABLE TO SHOW RENEWED BORROWING
+                if (!LibrariesArchive.renewBorrowing(renewedBorrowing))
+                    errorMessage("An error occurred while renewing the book. Please try again");
+                else
+                     userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
             }
         });
     }
@@ -197,9 +199,15 @@ public class MyLibrariesManager extends Application {
                                                            returnDate,
                                                            selectedBorrowing.getExpirationDate());
                 
-                //LibrariesArchive.endBorrowing(expiredBorrowing);
-                // CHECK ERRORS
-                // IF NO ERRORS, UPLOAD BORROWINGS TABLE TO SHOW RETURNED BORROWING
+                if(!LibrariesArchive.endBorrowing(expiredBorrowing))
+                    errorMessage("An error occurred while returning the book. Please try again");
+                else{
+                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+                   // If a library is selected, it shows the new available state of the returned book
+                   Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
+                   if ( selectedLibrary != null )
+                        libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                }
             }
         });
     }
@@ -207,12 +215,13 @@ public class MyLibrariesManager extends Application {
     private void setSelectLibraryEvent(){
         selectionMenu.get("Select library").setOnShowing((Event event)->{
             selectionMenu.get("Select library").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
-            selectionMenu.get("Select library").setItems(FXCollections.observableArrayList(/*LibrariesArchive.retrieveLibraries()*/));
+            selectionMenu.get("Select library").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveLibraries()));
         });
          
         selectionMenu.get("Select library").setOnAction((Event event)->{
             Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            libraryCatalog.updateBookList(selectedLibrary.getCatalog());
+            if ( selectedLibrary != null )
+                libraryCatalog.updateBookList(selectedLibrary.getCatalog());
          }); 
     }
     
@@ -233,9 +242,12 @@ public class MyLibrariesManager extends Application {
                 String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
                 
                 Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "", expirationDate);
-                //LibrariesArchive.addBorrowing(selectedUser, newBorrowing);
-                // CHECK ERRORS
-                // IF NO ERRORS, UPLOAD BORROWINGS TABLE TO SHOW THE NEW BORROWING
+                if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
+                    errorMessage("An error occurred while returning the book. Please try again");
+                else{
+                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+                   libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                }
             }
         });
     }
@@ -254,7 +266,7 @@ public class MyLibrariesManager extends Application {
             Genre selectedGenre = (Genre) selectionMenu.get("Select genre").getValue();
             
             if (selectedLibrary != null)
-                bookStatistics.updateStatisticsList(null);//LibrariesArchive.retrieveMostBorrowedBooks(selecteLibrary, selectedGenre);
+                bookStatistics.updateStatisticsList(null);//LibrariesArchive.retrieveMostBorrowedBooks(selectedLibrary, selectedGenre);
          }); 
     }
     
@@ -295,11 +307,14 @@ public class MyLibrariesManager extends Application {
     
     public void start(Stage stage){
         if (!LocalConfigurationParameters.retrieveLocalConfiguration()){
-            errorMessage("An error occured when parsing the configuration file");
+            errorMessage("An error occured while parsing the configuration file");
             return;
         }
-        // LibrariesArchive.initializeConnection();
-        // CHECK IF AN ERROR OCCURRED IN BOTH THE FUNCTIONS --> IF SO, ABORT THE APP
+        if (!LibrariesArchive.initializeConnection(LocalConfigurationParameters.getAddressDBMS(),
+                                                  LocalConfigurationParameters.getPortDBMS())){
+            errorMessage("An error occured while establishing a connection with the database");
+            return;
+        }
               
         VBox interfaceVBox = new VBox(30);
         interfaceVBox.setPadding(new Insets(20, 10, 10, 20));
