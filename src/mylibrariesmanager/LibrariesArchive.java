@@ -172,6 +172,7 @@ public class LibrariesArchive {
  	            return false;
  	        }
  	        else {
+ 	        	changeAvailableBook(borrowing.getBook());
  	        	return true;
  	        }
  		}
@@ -203,6 +204,7 @@ public class LibrariesArchive {
  	            return false;
  	        }
  	        else {
+ 	        	changeAvailableBook(borrowing.getBook());
  	        	return true;
  	        }
  		}
@@ -247,22 +249,25 @@ public class LibrariesArchive {
 	
 	
 	
-	public static  List<Genre> retrieveGenres() {
+	public static  List<Genre> retrieveGenres(Library library) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
 		List<Genre> genres = new ArrayList<Genre>();
 		
 		try {
-			preparedStatement = archiveConnection.prepareStatement("select * from genre");
+			preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ?");
+			preparedStatement.setInt(1, library.getId());
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
  				
- 				int idGenre = resultSet.getInt("id");
- 				String nameGenre = resultSet.getString("name"); 				
- 				Genre genre = new Genre(idGenre, nameGenre);
- 				genres.add(genre);
+ 				int idGenre = resultSet.getInt("id");				
+ 				Genre genre = retrieveGenre(idGenre);
+ 				
+ 				if (!genres.contains(genre)) {
+ 					genres.add(genre);
+ 				}
  			}
  		}
  		catch(SQLException e) {
@@ -273,11 +278,14 @@ public class LibrariesArchive {
 	
 	
 	
-	public static List<Book> retrieveMostBorrowedBooks() {
+	
+	
+	
+	public static List<BookStatistic> retrieveMostBorrowedBooks(Library library, Genre genre) {
 		PreparedStatement preparedStatement = null;
  		ResultSet resultSet = null;
  		
-		List<Book> books = new ArrayList<Book>();
+		List<BookStatistic> bookStatistics = new ArrayList<BookStatistic>();
 		List<List<Integer>> mostBorrowedBooks = new ArrayList<List<Integer>>();
 		
 		for (int i = 0; i < 10; i++) {
@@ -288,7 +296,9 @@ public class LibrariesArchive {
 		}
 		
 		try {
-			preparedStatement = archiveConnection.prepareStatement("select * from book");
+			preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ? and id_genre = ?");
+			preparedStatement.setInt(1, library.getId());
+			preparedStatement.setInt(2, genre.getId());
 			resultSet = preparedStatement.executeQuery();
  
  			while(resultSet.next()) { 
@@ -320,10 +330,11 @@ public class LibrariesArchive {
 		for (int j = 0; j < 10; j++) {
 			if (mostBorrowedBooks.get(j).get(0) != 0) {
 				Book b = retrieveBook(mostBorrowedBooks.get(j).get(0));
-				books.add(b);
+				BookStatistic bookStatistic = new BookStatistic(b.getTitle(), mostBorrowedBooks.get(j).get(1));
+				bookStatistics.add(bookStatistic);
 			}
 		}
-		return books;
+		return bookStatistics;
 	}
 	
 	
@@ -468,6 +479,30 @@ public class LibrariesArchive {
  			e.printStackTrace();
  		}
 		return affectedRows;		
+	}
+	
+	private static boolean changeAvailableBook(Book book) {
+		PreparedStatement preparedStatement = null;
+		
+		try { 			
+ 			String selectSQL = "UPDATE book SET available = ? WHERE id = ?";
+ 			preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+ 			preparedStatement.setBoolean(1, !book.getAvailable());
+ 			preparedStatement.setInt(2, book.getId());
+ 			
+ 			int affectedRows = preparedStatement.executeUpdate();
+
+ 	        if (affectedRows == 0) {
+ 	            return false;
+ 	        }
+ 	        else {
+ 	        	return true;
+ 	        }
+ 		}
+ 		catch(SQLException ex) {
+ 			ex.printStackTrace();
+ 		}
+		return false;
 	}
 	
 }
