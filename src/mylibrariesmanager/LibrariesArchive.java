@@ -15,27 +15,25 @@ import java.util.List;
 public class LibrariesArchive {
 	private static Connection archiveConnection;
 	
-	public static boolean initializeConnection() {
-		if (LocalConfigurationParameters.retrieveLocalConfiguration()) {
-			Connection con = null;
-			String url = "jdbc:mysql://" + LocalConfigurationParameters.getAddressDBMS() + ":" + LocalConfigurationParameters.getPortDBMS() + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
-			String username = "root";
-			String password = "root";
-
-			try {
-				try {
-					Class.forName("com.mysql.cj.jdbc.Driver");
-					return true;
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-				con = DriverManager.getConnection(url, username, password);
-			} catch (Exception e) {
+	public static boolean initializeConnection(String addressDBMS, String portDBMS) {
+		String url = "jdbc:mysql://" + addressDBMS + ":" + portDBMS + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
+		String username = "root";
+		String password = "root";
+                
+		try {
+            try {
+				Class.forName("com.mysql.jdbc.Driver");
+            } catch (ClassNotFoundException e) {
 				e.printStackTrace();
-			}
-			LibrariesArchive.archiveConnection = con;
+                return false;
+            }
+		    archiveConnection = DriverManager.getConnection(url, username, password);
+        } catch (Exception e) {
+			e.printStackTrace();
+            return false;
 		}
-		return false;
+		
+        return true;
 	}
 	
 	public static boolean addUser(User u) {
@@ -217,7 +215,7 @@ public class LibrariesArchive {
 		return false;
 	}
 	
-	public boolean renewBorrowing(Borrowing borrowing) {
+	public static boolean renewBorrowing(Borrowing borrowing) {
 		PreparedStatement preparedStatement = null;
 		
 		try {
