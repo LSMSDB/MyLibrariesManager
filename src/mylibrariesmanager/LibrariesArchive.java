@@ -21,19 +21,19 @@ public class LibrariesArchive {
 		String password = "root";
                 
 		try {
-            try {
-				Class.forName("com.mysql.jdbc.Driver");
-            } catch (ClassNotFoundException e) {
-				e.printStackTrace();
-                return false;
-            }
-		    archiveConnection = DriverManager.getConnection(url, username, password);
-        } catch (Exception e) {
+                    try {
+			Class.forName("com.mysql.jdbc.Driver");
+                    } catch (ClassNotFoundException e) {
 			e.printStackTrace();
-            return false;
+                        return false;
+                    }
+		    archiveConnection = DriverManager.getConnection(url, username, password);
+                } catch (Exception e) {
+		  e.printStackTrace();
+                  return false;
 		}
 		
-        return true;
+                return true;
 	}
 	
 	public static boolean addUser(User u) {
