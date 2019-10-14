@@ -15,7 +15,7 @@ import java.util.List;
 public class LibrariesArchive {
 	private static Connection archiveConnection;
 	
-	public LibrariesArchive() {
+	public static boolean initializeConnection() {
 		if (LocalConfigurationParameters.retrieveLocalConfiguration()) {
 			Connection con = null;
 			String url = "jdbc:mysql://" + LocalConfigurationParameters.getAddressDBMS() + ":" + LocalConfigurationParameters.getPortDBMS() + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
@@ -25,6 +25,7 @@ public class LibrariesArchive {
 			try {
 				try {
 					Class.forName("com.mysql.cj.jdbc.Driver");
+					return true;
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
@@ -34,6 +35,7 @@ public class LibrariesArchive {
 			}
 			LibrariesArchive.archiveConnection = con;
 		}
+		return false;
 	}
 	
 	public static boolean addUser(User u) {
