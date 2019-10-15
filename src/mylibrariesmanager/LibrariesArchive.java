@@ -97,8 +97,18 @@ public class LibrariesArchive {
     public static boolean deleteUser(User u) {
         PreparedStatement deleteUserAccount = null;
         PreparedStatement deleteUserBorrowings = null;
+        PreparedStatement makeBooksAvailable = null;
         
         try {
+            archiveConnection.setAutoCommit(false); // Queries will be executed in a single atomic transaction
+            
+            makeBooksAvailable = archiveConnection.prepareStatement("UPDATE " + 
+                                                                    "book INNER JOIN borrowing ON (borrowing.id_book = book.id) " +
+                                                                    "SET available = 1 " +
+                                                                    "WHERE id_user = ?");
+            makeBooksAvailable.setInt(1, u.getId());
+            makeBooksAvailable.executeUpdate();
+            
             deleteUserBorrowings = archiveConnection.prepareStatement("DELETE FROM borrowing WHERE id_user = ?");
             deleteUserBorrowings.setInt(1, u.getId());
             deleteUserBorrowings.executeUpdate();
@@ -109,9 +119,12 @@ public class LibrariesArchive {
             int affectedRows = deleteUserAccount.executeUpdate();
 
             if (affectedRows == 0) {
+                archiveConnection.setAutoCommit(true); // Return to the normal commit mode
                 return false;
             }
             else {
+                archiveConnection.commit();  // Queries executed in a single atomic transaction
+                archiveConnection.setAutoCommit(true); // Return to the normal commit mode
                 return true;
             }           
             
@@ -172,6 +185,7 @@ public class LibrariesArchive {
             int affectedRows = preparedStatement.executeUpdate();
 
             if (affectedRows == 0) {
+                archiveConnection.setAutoCommit(true); // Return to the normal commit mode
                 return false;
             }
             else {
