@@ -146,9 +146,9 @@ public class LibrariesArchive {
     }
     
     public static boolean addBorrowing(User user, Borrowing borrowing) {
-        
         PreparedStatement preparedStatement = null;
         try {
+            archiveConnection.setAutoCommit(false); // Queries will be executed in a single atomic transaction
             
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             Date sdf_borrowingDate = new java.sql.Date(sdf.parse(borrowing.getBorrowingDate()).getTime());
@@ -170,8 +170,10 @@ public class LibrariesArchive {
             }
             else {
                 changeAvailableBook(borrowing.getBook());
+                archiveConnection.commit();  // Queries executed in a single atomic transaction
+                archiveConnection.setAutoCommit(true); // Return to the normal commit mode
                 return true;
-            }
+            } 
         }
         catch(SQLException ex) {
             ex.printStackTrace();
@@ -179,6 +181,7 @@ public class LibrariesArchive {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
         return false;
     }
     
