@@ -258,7 +258,7 @@ public class MyLibrariesManager extends Application {
             selectionMenu.get("Select genre").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
             
             if (selectedLibrary != null)
-                selectionMenu.get("Select genre").setItems(FXCollections.observableArrayList(/*LibrariesArchive.retrieveGenres(selectedLibrary)*/));      
+                selectionMenu.get("Select genre").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveGenres(selectedLibrary)));      
         });
          
         selectionMenu.get("Select genre").setOnAction((Event event)->{
@@ -266,7 +266,7 @@ public class MyLibrariesManager extends Application {
             Genre selectedGenre = (Genre) selectionMenu.get("Select genre").getValue();
             
             if (selectedLibrary != null)
-                bookStatistics.updateStatisticsList(null);//LibrariesArchive.retrieveMostBorrowedBooks(selectedLibrary, selectedGenre);
+                bookStatistics.updateStatisticsList(LibrariesArchive.retrieveMostBorrowedBooks(selectedLibrary, selectedGenre));
          }); 
     }
     

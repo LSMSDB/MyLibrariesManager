@@ -1,347 +1,508 @@
 package mylibrariesmanager;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-import java.time.*;
-import java.time.format.*;
-import java.time.temporal.*;
-import java.util.*;
-import javafx.application.*;
-import javafx.collections.*;
-import javafx.event.*;
-import javafx.geometry.*;
-import javafx.scene.*;
-import javafx.scene.control.*;
-import javafx.scene.control.Alert.*;
-import javafx.scene.layout.*;
-import javafx.stage.*;
-
-
-public class MyLibrariesManager extends Application {
-    private LibraryCatalogView libraryCatalog;
-    private UserBorrowingsView userBorrowings;
-    private BookStatisticsView bookStatistics;
-    private Map<String, ComboBox> selectionMenu;
-    private Map<String, TextField> createAccountField;
-    private Map<String, Button> actionButton;
-    private Map<String, Label> descriptiveLabel;
-
+public class LibrariesArchive {
+    private static Connection archiveConnection;
     
-    private VBox buildCreateAccountSection(){
-        actionButton.put("Create account", new Button("Create account"));
-        String[] fieldNames = new String[]{"Name", "Surname", "Address", "Phone", "Email"};
-        
-        for(String label : fieldNames){
-            TextField newField = new TextField();
-            newField.promptTextProperty().set(label);
-            newField.setMinSize(200,10);
-            createAccountField.put(label, newField);
+    public static boolean initializeConnection(String addressDBMS, String portDBMS) {
+        String url = "jdbc:mysql://" + addressDBMS + ":" + portDBMS + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
+        String username = "root";
+        String password = "root";
+                
+        try {
+                    try {
+            Class.forName("com.mysql.jdbc.Driver");
+                    } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+                        return false;
+                    }
+            archiveConnection = DriverManager.getConnection(url, username, password);
+                } catch (Exception e) {
+          e.printStackTrace();
+                  return false;
         }
         
-        
-        VBox createAccountVbox = new VBox(10);  
-        createAccountVbox.setAlignment(Pos.CENTER);
-        createAccountVbox.getChildren().addAll(new HBox(5, createAccountField.get("Name"), createAccountField.get("Surname")),
-                                               createAccountField.get("Address"),
-                                               createAccountField.get("Phone"), 
-                                               createAccountField.get("Email"),
-                                               actionButton.get("Create account"));
-        
-        return createAccountVbox;
+                return true;
     }
     
-    private VBox buildUserAccountSection(){
-        selectionMenu.put("Select user", new ComboBox());
-        actionButton.put("Delete account", new Button("Delete account"));
-        descriptiveLabel.put("Select user", new Label("Select a user"));
+    public static boolean addUser(User u) {
+        PreparedStatement preparedStatement = null;
         
-        VBox userAccountVBox = new VBox(30);
-        userAccountVBox.setAlignment(Pos.BASELINE_RIGHT);
-        userAccountVBox.getChildren().addAll(new HBox(20, descriptiveLabel.get("Select user"), selectionMenu.get("Select user")),
-                                             actionButton.get("Delete account"));
-        
-        return userAccountVBox;
-    }
-    
-    private HBox buildMyBorrowingsSection(){
-        userBorrowings = new UserBorrowingsView();
-        actionButton.put("Renew book", new Button("Renew the selected book"));
-        actionButton.put("Return book", new Button("Return the selected book"));
-        
-        VBox renewReturnVBox = new VBox(30);
-        renewReturnVBox.setAlignment(Pos.CENTER);
-        renewReturnVBox.getChildren().addAll(actionButton.get("Renew book"), actionButton.get("Return book"));
-        
-        return new HBox(100, userBorrowings, renewReturnVBox);
-    }
-    
-    private HBox buildLibraryCatalogSection(){
-        libraryCatalog = new LibraryCatalogView();
-        selectionMenu.put("Select library", new ComboBox());
-        descriptiveLabel.put("Select library", new Label("Select a library"));
-        actionButton.put("Borrow book", new Button("Borrow the selected book"));
-        
-        VBox selectBorrowVBox = new VBox(15);
-        selectBorrowVBox.setAlignment(Pos.CENTER);
-        selectBorrowVBox.getChildren().addAll(descriptiveLabel.get("Select library"),
-                                              selectionMenu.get("Select library"),
-                                              actionButton.get("Borrow book"));
-        
-        return new HBox(100, libraryCatalog, selectBorrowVBox);
-    }
-    
-    private HBox buildStatisticsSection(){
-        bookStatistics = new BookStatisticsView();
-        descriptiveLabel.put("Most borrowed books", new Label("Most borrowed books"));
-        selectionMenu.put("Select genre", new ComboBox());
-        descriptiveLabel.put("Select genre", new Label("Select a genre"));
+        try {
+            String selectSQL = "INSERT INTO user (name, surname, address, email, phone) VALUES (?, ?, ?, ?, ?)";
+            preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, u.getName());
+            preparedStatement.setString(2, u.getSurname());
+            preparedStatement.setString(3, u.getAddress());
+            preparedStatement.setString(4, u.getEmail());
+            preparedStatement.setString(5, u.getPhone());
             
-        VBox selectGenreVBox = new VBox(15);
-        selectGenreVBox.setAlignment(Pos.CENTER);
-        selectGenreVBox.getChildren().addAll(descriptiveLabel.get("Select genre"),
-                                             selectionMenu.get("Select genre"));
-        
-        return new HBox(100,bookStatistics, selectGenreVBox);
-    }
-    
-    private void setCreateAccountEvent(){
-        actionButton.get("Create account").setOnAction((ActionEvent event)->{
-            int missingValues = 0;
-            
-            for(TextField textField : createAccountField.values()){
-                if (textField.getText().isEmpty()){
-                    textField.setStyle("-fx-text-box-border: red ; -fx-focus-color: red ;");
-                    missingValues++;
-                } else
-                    textField.setStyle(null);
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                return false;
             }
-            
-            if (missingValues == 0){
-                User newUser = new User(0, 
-                                        createAccountField.get("Name").getText(), 
-                                        createAccountField.get("Surname").getText(),
-                                        createAccountField.get("Address").getText(),
-                                        createAccountField.get("Email").getText(),
-                                        createAccountField.get("Phone").getText(),
-                                        null);
-                if (!LibrariesArchive.addUser(newUser))
-                    errorMessage("An error occurred while creating the account. Please try again");
+            else {
+                return true;
             }
-        });
+        }
+        catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+        return false;
     }
     
-    private void setSelectUserEvent(){
-        selectionMenu.get("Select user").setOnShowing((Event event)->{
-            selectionMenu.get("Select user").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
-            selectionMenu.get("Select user").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveUsers()));
-        });
-         
-        selectionMenu.get("Select user").setOnAction((Event event)->{
-            User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            if ( selectedUser != null )
-                userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
-         });   
-    }
-    
-    private void setDeleteAccountEvent(){
-        actionButton.get("Delete account").setOnAction((ActionEvent event)->{
-            User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            
-            if (selectedUser != null ){
-                if (!LibrariesArchive.deleteUser(selectedUser))
-                    errorMessage("An error occurred while deleting the account. Please try again");
-            }else
-                 errorMessage("Please select your account from the list");
-        });
-    }
-    
-    private void setRenewBookEvent(){
-        actionButton.get("Renew book").setOnAction((ActionEvent event)->{
-            User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
-            
-            if (selectedUser != null && selectedBorrowing != null){
-                if (!selectedBorrowing.getReturnDate().isEmpty())
-                    return;
+    public static List<User> retrieveUsers() {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        List<User> users = new ArrayList<User>();
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from user");
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
                 
-                LocalDate newExpirationDate = LocalDate.parse(selectedBorrowing.getExpirationDate(), 
-                                                              DateTimeFormatter.ofPattern("dd-MM-yy"));
-                newExpirationDate = newExpirationDate.plus(1, ChronoUnit.WEEKS);
-                        
-                String expirationDate = newExpirationDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
-                Borrowing renewedBorrowing = new Borrowing(selectedBorrowing.getId(),
-                                                           selectedBorrowing.getBook(),
-                                                           selectedBorrowing.getBorrowingDate(),
-                                                           selectedBorrowing.getReturnDate(),
-                                                           expirationDate);
+                int idUser = resultSet.getInt("id");
                 
-                if (!LibrariesArchive.renewBorrowing(renewedBorrowing))
-                    errorMessage("An error occurred while renewing the book. Please try again");
-                else
-                     userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+                String nameUser = resultSet.getString("name");
+                String surnameUser = resultSet.getString("surname");
+                String addressUser = resultSet.getString("address");
+                String emailUser = resultSet.getString("email");
+                String phoneUser = resultSet.getString("phone");
+                List<Borrowing> borrowings = retrieveBorrowings(idUser);
+                
+                User u = new User(idUser, nameUser, surnameUser, addressUser, emailUser, phoneUser, borrowings);
+                users.add(u);
             }
-        });
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
     }
     
-    private void setReturnBookEvent(){
-        actionButton.get("Return book").setOnAction((ActionEvent event)->{
-            User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
+    public static boolean deleteUser(User u) {
+        PreparedStatement preparedStatement = null;
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("delete from user WHERE id = ?");
+            preparedStatement.setInt(1, u.getId());
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }           
             
-            if (selectedUser != null && selectedBorrowing != null){
-                if (!selectedBorrowing.getReturnDate().isEmpty())
-                    return;
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    
+    
+    public static List<Library> retrieveLibraries() {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        List<Library> libraries = new ArrayList<Library>();
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from library");
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
                 
-                LocalDate currentDate = LocalDate.now();
-                String returnDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
-                Borrowing expiredBorrowing = new Borrowing(selectedBorrowing.getId(),
-                                                           selectedBorrowing.getBook(),
-                                                           selectedBorrowing.getBorrowingDate(),
-                                                           returnDate,
-                                                           selectedBorrowing.getExpirationDate());
+                int idLibrary = resultSet.getInt("id");
                 
-                if(!LibrariesArchive.endBorrowing(expiredBorrowing))
-                    errorMessage("An error occurred while returning the book. Please try again");
-                else{
-                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
-                   // If a library is selected, it shows the new available state of the returned book
-                   Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-                   if ( selectedLibrary != null )
-                        libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                String nameLibrary = resultSet.getString("name");
+                String addressLibrary = resultSet.getString("address");                 
+
+                List<Book> book = retrieveBooks(idLibrary);
+                
+                Library lib = new Library(idLibrary, nameLibrary, addressLibrary, book);
+                libraries.add(lib);
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return libraries;
+    }
+    
+    
+    
+    public static boolean addBorrowing(User user, Borrowing borrowing) {
+        
+        PreparedStatement preparedStatement = null;
+        try {
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date sdf_borrowingDate = new java.sql.Date(sdf.parse(borrowing.getBorrowingDate()).getTime());
+            Date sdf_returnDate = new java.sql.Date(sdf.parse(borrowing.getReturnDate()).getTime());
+            Date sdf_expirationDate = new java.sql.Date(sdf.parse(borrowing.getExpirationDate()).getTime());
+            
+            String selectSQL = "INSERT INTO borrowing (id_user, id_book, borrowing_date, return_date, expiration_date) VALUES (?, ?, ?, ?, ?)";
+            preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setInt(1, user.getId());
+            preparedStatement.setInt(2, borrowing.getBook().getId());
+            preparedStatement.setDate(3, (java.sql.Date) sdf_borrowingDate);
+            preparedStatement.setDate(4, (java.sql.Date) sdf_returnDate);
+            preparedStatement.setDate(5, (java.sql.Date) sdf_expirationDate);
+            
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                return false;
+            }
+            else {
+                changeAvailableBook(borrowing.getBook());
+                return true;
+            }
+        }
+        catch(SQLException ex) {
+            ex.printStackTrace();
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public static boolean endBorrowing(Borrowing borrowing) {
+        PreparedStatement preparedStatement = null;
+        
+        try {
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date sdf_returnDate = new java.sql.Date(sdf.parse(borrowing.getReturnDate()).getTime());
+            
+            String selectSQL = "UPDATE borrowing SET return_date = ? WHERE id = ?";
+            preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setDate(1, (java.sql.Date) sdf_returnDate);
+            preparedStatement.setInt(2, borrowing.getId());
+            
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                return false;
+            }
+            else {
+                changeAvailableBook(borrowing.getBook());
+                return true;
+            }
+        }
+        catch(SQLException ex) {
+            ex.printStackTrace();
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public static boolean renewBorrowing(Borrowing borrowing) {
+        PreparedStatement preparedStatement = null;
+        
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date sdf_expirationDate = new java.sql.Date(sdf.parse(borrowing.getExpirationDate()).getTime());
+            
+            String selectSQL = "UPDATE borrowing SET expiration_date = ? WHERE id = ?";
+            preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setDate(1, (java.sql.Date) sdf_expirationDate);
+            preparedStatement.setInt(2, borrowing.getId());
+            
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        catch(SQLException ex) {
+            ex.printStackTrace();
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    
+    
+    public static  List<Genre> retrieveGenres(Library library) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        List<Genre> genres = new ArrayList<Genre>();
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ?");
+            preparedStatement.setInt(1, library.getId());
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
+                
+                int idGenre = resultSet.getInt("id");               
+                Genre genre = retrieveGenre(idGenre);
+                
+                if (!genres.contains(genre)) {
+                    genres.add(genre);
                 }
             }
-        });
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return genres;
     }
     
-    private void setSelectLibraryEvent(){
-        selectionMenu.get("Select library").setOnShowing((Event event)->{
-            selectionMenu.get("Select library").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
-            selectionMenu.get("Select library").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveLibraries()));
-        });
-         
-        selectionMenu.get("Select library").setOnAction((Event event)->{
-            Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            if ( selectedLibrary != null )
-                libraryCatalog.updateBookList(selectedLibrary.getCatalog());
-         }); 
-    }
     
-    private void setBorrowBookEvent(){
-        actionButton.get("Borrow book").setOnAction((ActionEvent event)->{
-            User selectedUser = (User) selectionMenu.get("Select user").getValue();
-            Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            Book selectedBook = libraryCatalog.getSelectionModel().getSelectedItem();
-            
-            if (selectedUser != null && selectedLibrary != null && selectedBook != null){
-                if (!selectedBook.getAvailable())
-                    return;
+    
+    
+    
+    
+    public static List<BookStatistic> retrieveMostBorrowedBooks(Library library, Genre genre) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        List<BookStatistic> bookStatistics = new ArrayList<BookStatistic>();
+        List<List<Integer>> mostBorrowedBooks = new ArrayList<List<Integer>>();
+        
+        for (int i = 0; i < 10; i++) {
+            List<Integer> mostBorrowedBook = new ArrayList<Integer>();
+            mostBorrowedBook.add(0);
+            mostBorrowedBook.add(0);
+            mostBorrowedBooks.add(mostBorrowedBook);
+        }
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ? and id_genre = ?");
+            preparedStatement.setInt(1, library.getId());
+            preparedStatement.setInt(2, genre.getId());
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
                 
-                LocalDate currentDate = LocalDate.now();
-                LocalDate currentDatePlusTwoWeeks = LocalDate.now().plus(2, ChronoUnit.WEEKS);
+                int idBook = resultSet.getInt("id");            
+                int numberBorrowing = countBorrowing(idBook);
+                boolean mostPopular = false;
                 
-                String borrowingDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
-                String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
-                
-                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "", expirationDate);
-                if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
-                    errorMessage("An error occurred while returning the book. Please try again");
-                else{
-                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
-                   libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                if (numberBorrowing > mostBorrowedBooks.get(9).get(1)) {
+                    int k = 0;
+                    while (!mostPopular) {
+                        if (numberBorrowing > mostBorrowedBooks.get(k).get(1)) {
+                            List<Integer> bookPopular = new ArrayList<Integer>();
+                            bookPopular.add(idBook);
+                            bookPopular.add(numberBorrowing);
+                            mostPopular = true;
+                            
+                            mostBorrowedBooks.add(k, bookPopular);
+                        }
+                        k++;
+                    }
                 }
             }
-        });
-    }
-    
-    private void setSelectGenreEvent(){
-        selectionMenu.get("Select genre").setOnShowing((Event event)->{
-            Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            selectionMenu.get("Select genre").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
-            
-            if (selectedLibrary != null)
-                selectionMenu.get("Select genre").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveGenres(selectedLibrary)));      
-        });
-         
-        selectionMenu.get("Select genre").setOnAction((Event event)->{
-            Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
-            Genre selectedGenre = (Genre) selectionMenu.get("Select genre").getValue();
-            
-            if (selectedLibrary != null)
-                bookStatistics.updateStatisticsList(LibrariesArchive.retrieveMostBorrowedBooks(selectedLibrary, selectedGenre));
-         }); 
-    }
-    
-    private void setInterfaceEvents(){
-        setCreateAccountEvent();
-        setSelectUserEvent();
-        setDeleteAccountEvent();
-        setRenewBookEvent();
-        setReturnBookEvent();
-        setSelectLibraryEvent();
-        setBorrowBookEvent();
-        setSelectGenreEvent();
-    }
-    
-    private void setComponentsLayout(){
-        for(Button button : actionButton.values()){
-            button.setMinSize(20,30);
-            button.setStyle("-fx-font-weight: bold;");
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
         }
         
-        for (Label label : descriptiveLabel.values()){
-            label.setStyle("-fx-font-weight: bold;");
-            if (label.getText().equals("Most borrowed books"))
-                label.setStyle("-fx-font-size: 20px");
+        for (int j = 0; j < 10; j++) {
+            if (mostBorrowedBooks.get(j).get(0) != 0) {
+                Book b = retrieveBook(mostBorrowedBooks.get(j).get(0));
+                BookStatistic bookStatistic = new BookStatistic(b.getTitle(), mostBorrowedBooks.get(j).get(1));
+                bookStatistics.add(bookStatistic);
+            }
         }
-        
-        for (ComboBox box : selectionMenu.values())
-            box.setMinSize(100, 10);
+        return bookStatistics;
     }
     
-    private void errorMessage(String message){
-        Alert alert = new Alert(AlertType.ERROR, message, ButtonType.OK);
-        alert.showAndWait();
+    
+    
+    private static List<Borrowing> retrieveBorrowings(int idUser) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        List<Borrowing> borrowings = new ArrayList<Borrowing>();
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from borrowing where id_user = ?");
+            preparedStatement.setInt(1, idUser);
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
+                
+                int idBorrowing = resultSet.getInt("id");               
+                int idBook = resultSet.getInt("id_book");               
+                Date borrowingDate = resultSet.getDate("borrowing_date");
+                Date returnDate = resultSet.getDate("return_date");
+                Date expirationDate = resultSet.getDate("expiration_date");
+                
+                Book book = retrieveBook(idBook);
+                
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                String sdf_borrowingDate = sdf.format(borrowingDate);
+                String sdf_returnDate = sdf.format(returnDate);
+                String sdf_expirationDate = sdf.format(expirationDate);
+                
+                Borrowing borrowing = new Borrowing(idBorrowing, book, sdf_borrowingDate, sdf_returnDate, sdf_expirationDate);
+                borrowings.add(borrowing);
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return borrowings;
+    }
+    
+    private static List<Book> retrieveBooks(int idLibrary) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        List<Book> books = new ArrayList<Book>();
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from book where id_library = ?");
+            preparedStatement.setInt(1, idLibrary);
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
+                
+                int idBook = resultSet.getInt("id");
+                String titleBook = resultSet.getString("title");
+                String authorBook = resultSet.getString("author");
+                String editionBook = resultSet.getString("edition");
+                int genreBook = resultSet.getInt("id_genre");
+                boolean availableBook = resultSet.getBoolean("available");
+                
+                Genre genre = retrieveGenre(genreBook);
+                
+                Book book = new Book(idBook, titleBook, authorBook, editionBook, availableBook, genre);
+                books.add(book);
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return books;
+    }
+    
+    private static Book retrieveBook(int idBook) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        Book book = null;
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from book where id = ?");
+            preparedStatement.setInt(1, idBook);
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
+                
+                String titleBook = resultSet.getString("title");
+                String authorBook = resultSet.getString("author");
+                String editionBook = resultSet.getString("edition");
+                int genreBook = resultSet.getInt("id_genre");
+                boolean availableBook = resultSet.getBoolean("available");
+                
+                Genre genre = retrieveGenre(genreBook);
+                
+                book = new Book(idBook, titleBook, authorBook, editionBook, availableBook, genre);
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return book;
+    }
+    
+    private static Genre retrieveGenre(int idGenre) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        Genre genre = null;
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from genre where id = ?");
+            preparedStatement.setInt(1, idGenre);
+            resultSet = preparedStatement.executeQuery();
+ 
+            while(resultSet.next()) { 
+                
+                String nameGenre = resultSet.getString("name");                 
+                genre = new Genre(idGenre, nameGenre);
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return genre;
+    }
+    
+    private static int countBorrowing(int idBook) {
+        PreparedStatement preparedStatement = null;
+        ResultSet rs = null;
+        int affectedRows = 0;
+        
+        try {
+            preparedStatement = archiveConnection.prepareStatement("select * from borrowing where id_book = ?");
+            preparedStatement.setInt(1, idBook); 
+            rs = preparedStatement.executeQuery();
+            
+            if (rs != null) {
+                rs.last();
+                affectedRows = rs.getRow();
+            }
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return affectedRows;        
+    }
+    
+    private static boolean changeAvailableBook(Book book) {
+        PreparedStatement preparedStatement = null;
+        
+        try {           
+            String selectSQL = "UPDATE book SET available = ? WHERE id = ?";
+            preparedStatement = archiveConnection.prepareStatement(selectSQL, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setBoolean(1, !book.getAvailable());
+            preparedStatement.setInt(2, book.getId());
+            
+            int affectedRows = preparedStatement.executeUpdate();
 
-        if (alert.getResult() == ButtonType.OK)
-            alert.close();
-    }
-    
-    public void start(Stage stage){
-        if (!LocalConfigurationParameters.retrieveLocalConfiguration()){
-            errorMessage("An error occured while parsing the configuration file");
-            return;
+            if (affectedRows == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
         }
-        if (!LibrariesArchive.initializeConnection(LocalConfigurationParameters.getAddressDBMS(),
-                                                  LocalConfigurationParameters.getPortDBMS())){
-            errorMessage("An error occured while establishing a connection with the database");
-            return;
+        catch(SQLException ex) {
+            ex.printStackTrace();
         }
-              
-        VBox interfaceVBox = new VBox(30);
-        interfaceVBox.setPadding(new Insets(20, 10, 10, 20));
-        
-        selectionMenu = new HashMap<>();
-        createAccountField = new HashMap<>();
-        actionButton = new HashMap<>();
-        descriptiveLabel = new HashMap<>();
-        
-        interfaceVBox.getChildren().addAll(
-            new HBox(
-                150,
-                buildCreateAccountSection(),
-                buildUserAccountSection()),
-                buildMyBorrowingsSection(),
-                buildLibraryCatalogSection(),
-                buildStatisticsSection()
-            );
-        
-        setComponentsLayout();
-        setInterfaceEvents();
-        
-        ScrollPane scrollRoot = new ScrollPane(new Group(interfaceVBox));
-        stage.setScene(new Scene(scrollRoot));
-        stage.setTitle("MyLibrariesManager");
-        stage.setMaximized(true);
-        stage.show();        
+        return false;
     }
     
 }
