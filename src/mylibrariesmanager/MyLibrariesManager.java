@@ -164,10 +164,10 @@ public class MyLibrariesManager extends Application {
                     return;
                 
                 LocalDate newExpirationDate = LocalDate.parse(selectedBorrowing.getExpirationDate(), 
-                                                              DateTimeFormatter.ofPattern("dd-MM-yy"));
+                                                              DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 newExpirationDate = newExpirationDate.plus(1, ChronoUnit.WEEKS);
                         
-                String expirationDate = newExpirationDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
+                String expirationDate = newExpirationDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 Borrowing renewedBorrowing = new Borrowing(selectedBorrowing.getId(),
                                                            selectedBorrowing.getBook(),
                                                            selectedBorrowing.getBorrowingDate(),
@@ -192,7 +192,7 @@ public class MyLibrariesManager extends Application {
                     return;
                 
                 LocalDate currentDate = LocalDate.now();
-                String returnDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
+                String returnDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 Borrowing expiredBorrowing = new Borrowing(selectedBorrowing.getId(),
                                                            selectedBorrowing.getBook(),
                                                            selectedBorrowing.getBorrowingDate(),
@@ -238,10 +238,10 @@ public class MyLibrariesManager extends Application {
                 LocalDate currentDate = LocalDate.now();
                 LocalDate currentDatePlusTwoWeeks = LocalDate.now().plus(2, ChronoUnit.WEEKS);
                 
-                String borrowingDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
-                String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
+                String borrowingDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 
-                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "00-00-00", expirationDate);
+                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "00-00-0000", expirationDate);
                 if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
                     errorMessage("An error occurred while returning the book. Please try again");
                 else{
