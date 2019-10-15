@@ -95,12 +95,18 @@ public class LibrariesArchive {
     }
     
     public static boolean deleteUser(User u) {
-        PreparedStatement preparedStatement = null;
+        PreparedStatement deleteUserAccount = null;
+        PreparedStatement deleteUserBorrowings = null;
         
         try {
-            preparedStatement = archiveConnection.prepareStatement("delete from user WHERE id = ?");
-            preparedStatement.setInt(1, u.getId());
-            int affectedRows = preparedStatement.executeUpdate();
+            deleteUserBorrowings = archiveConnection.prepareStatement("DELETE FROM borrowing WHERE id_user = ?");
+            deleteUserBorrowings.setInt(1, u.getId());
+            deleteUserBorrowings.executeUpdate();
+            
+            deleteUserAccount = archiveConnection.prepareStatement("delete from user WHERE id = ?");
+            deleteUserAccount.setInt(1, u.getId());
+            
+            int affectedRows = deleteUserAccount.executeUpdate();
 
             if (affectedRows == 0) {
                 return false;
