@@ -16,24 +16,25 @@ public class LibrariesArchive {
     private static Connection archiveConnection;
     
     public static boolean initializeConnection(String addressDBMS, String portDBMS) {
-        String url = "jdbc:mysql://" + addressDBMS + ":" + portDBMS + "/mylibmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
+        String url = "jdbc:mysql://" + addressDBMS + ":" + portDBMS + "/mylibrariesmanager?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Paris";
         String username = "root";
         String password = "root";
                 
         try {
-                    try {
-            Class.forName("com.mysql.jdbc.Driver");
-                    } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-                        return false;
-                    }
+            try {
+                Class.forName("com.mysql.jdbc.Driver");
+            }catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
             archiveConnection = DriverManager.getConnection(url, username, password);
-                } catch (Exception e) {
-          e.printStackTrace();
-                  return false;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
         
-                return true;
+        return true;
     }
     
     public static boolean addUser(User u) {
@@ -114,9 +115,7 @@ public class LibrariesArchive {
         }
         return false;
     }
-    
-    
-    
+      
     public static List<Library> retrieveLibraries() {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -145,8 +144,6 @@ public class LibrariesArchive {
         }
         return libraries;
     }
-    
-    
     
     public static boolean addBorrowing(User user, Borrowing borrowing) {
         
@@ -247,8 +244,6 @@ public class LibrariesArchive {
         return false;
     }
     
-    
-    
     public static  List<Genre> retrieveGenres(Library library) {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -261,13 +256,17 @@ public class LibrariesArchive {
             resultSet = preparedStatement.executeQuery();
  
             while(resultSet.next()) { 
-                
-                int idGenre = resultSet.getInt("id");               
+                int idGenre = resultSet.getInt("id_genre");               
                 Genre genre = retrieveGenre(idGenre);
                 
-                if (!genres.contains(genre)) {
+                boolean checkIfInList = false;
+                
+                for (Genre addedGenre : genres)
+                    if (addedGenre.getId() == genre.getId())
+                        checkIfInList = true;
+                
+                if (!checkIfInList)
                     genres.add(genre);
-                }
             }
         }
         catch(SQLException e) {
@@ -275,11 +274,6 @@ public class LibrariesArchive {
         }
         return genres;
     }
-    
-    
-    
-    
-    
     
     public static List<BookStatistic> retrieveMostBorrowedBooks(Library library, Genre genre) {
         PreparedStatement preparedStatement = null;
@@ -337,9 +331,17 @@ public class LibrariesArchive {
         return bookStatistics;
     }
     
+    public static void closeConnection(){
+        try{
+            archiveConnection.close();
+            
+        }catch(SQLException exception) {
+            exception.printStackTrace();
+        }
+    }
     
     
-    private static List<Borrowing> retrieveBorrowings(int idUser) {
+    public static List<Borrowing> retrieveBorrowings(int idUser) {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         
@@ -365,6 +367,10 @@ public class LibrariesArchive {
                 String sdf_returnDate = sdf.format(returnDate);
                 String sdf_expirationDate = sdf.format(expirationDate);
                 
+                
+                if (sdf_returnDate.equals("30-11-0002"))
+                    sdf_returnDate = "00-00-0000";
+                
                 Borrowing borrowing = new Borrowing(idBorrowing, book, sdf_borrowingDate, sdf_returnDate, sdf_expirationDate);
                 borrowings.add(borrowing);
             }
@@ -375,7 +381,7 @@ public class LibrariesArchive {
         return borrowings;
     }
     
-    private static List<Book> retrieveBooks(int idLibrary) {
+    public static List<Book> retrieveBooks(int idLibrary) {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         

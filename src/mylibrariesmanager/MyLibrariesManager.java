@@ -123,8 +123,14 @@ public class MyLibrariesManager extends Application {
                                         createAccountField.get("Email").getText(),
                                         createAccountField.get("Phone").getText(),
                                         null);
+                
                 if (!LibrariesArchive.addUser(newUser))
                     errorMessage("An error occurred while creating the account. Please try again");
+                else{
+                    for(TextField textField : createAccountField.values())
+                        textField.clear();
+                    successMessage("Your account has been successfully created");
+                }
             }
         });
     }
@@ -149,6 +155,10 @@ public class MyLibrariesManager extends Application {
             if (selectedUser != null ){
                 if (!LibrariesArchive.deleteUser(selectedUser))
                     errorMessage("An error occurred while deleting the account. Please try again");
+                else{
+                     selectionMenu.get("Select user").setItems(null);
+                     successMessage("Your account has been successfully deleted");
+                }
             }else
                  errorMessage("Please select your account from the list");
         });
@@ -160,8 +170,10 @@ public class MyLibrariesManager extends Application {
             Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
             
             if (selectedUser != null && selectedBorrowing != null){
-                if (!selectedBorrowing.getReturnDate().isEmpty())
+                if (!selectedBorrowing.getReturnDate().equals("00-00-0000")){
+                    errorMessage("You cannot renew an expired borrowing");
                     return;
+                }
                 
                 LocalDate newExpirationDate = LocalDate.parse(selectedBorrowing.getExpirationDate(), 
                                                               DateTimeFormatter.ofPattern("dd-MM-yyyy"));
@@ -176,9 +188,13 @@ public class MyLibrariesManager extends Application {
                 
                 if (!LibrariesArchive.renewBorrowing(renewedBorrowing))
                     errorMessage("An error occurred while renewing the book. Please try again");
-                else
-                     userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
+                else{
+                     userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
+                     successMessage("The book has been successfully renewed");
+                }
             }
+            else
+                errorMessage("Please select a user and a borrowing before proceeding");
         });
     }
     
@@ -187,9 +203,11 @@ public class MyLibrariesManager extends Application {
             User selectedUser = (User) selectionMenu.get("Select user").getValue();
             Borrowing selectedBorrowing = userBorrowings.getSelectionModel().getSelectedItem();
             
-            if (selectedUser != null && selectedBorrowing != null){
-                if (!selectedBorrowing.getReturnDate().isEmpty())
+            if (selectedUser != null && selectedBorrowing != null){      
+                if (!selectedBorrowing.getReturnDate().equals("00-00-0000")){
+                    errorMessage("Your book is already returned");
                     return;
+                }
                 
                 LocalDate currentDate = LocalDate.now();
                 String returnDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
@@ -202,13 +220,18 @@ public class MyLibrariesManager extends Application {
                 if(!LibrariesArchive.endBorrowing(expiredBorrowing))
                     errorMessage("An error occurred while returning the book. Please try again");
                 else{
-                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
-                   // If a library is selected, it shows the new available state of the returned book
+                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
+                   
+                   // Update of the library table. It is useful to show the new available state of the returned book 
+                   // if the library selected is the book's one
                    Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
                    if ( selectedLibrary != null )
-                        libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));
+                   successMessage("The book has been successfully returned");
                 }
             }
+            else
+                errorMessage("Please select a user and a borrowing before proceeding");
         });
     }
     
@@ -232,8 +255,10 @@ public class MyLibrariesManager extends Application {
             Book selectedBook = libraryCatalog.getSelectionModel().getSelectedItem();
             
             if (selectedUser != null && selectedLibrary != null && selectedBook != null){
-                if (!selectedBook.getAvailable())
+                if (!selectedBook.getAvailable()){
+                    errorMessage("The selected book is not available at the moment");
                     return;
+                }
                 
                 LocalDate currentDate = LocalDate.now();
                 LocalDate currentDatePlusTwoWeeks = LocalDate.now().plus(2, ChronoUnit.WEEKS);
@@ -241,14 +266,19 @@ public class MyLibrariesManager extends Application {
                 String borrowingDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                 
-                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "00-00-0000", expirationDate);
+                // "30-11-0002" is used as a null returning date
+                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "30-11-0002", expirationDate);
+                
                 if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
-                    errorMessage("An error occurred while returning the book. Please try again");
+                    errorMessage("An error occurred while borrowing the book. Please try again");
                 else{
-                   userBorrowings.updateBorrowingList(selectedUser.getBorrowings());
-                   libraryCatalog.updateBookList(selectedLibrary.getCatalog());   
+                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
+                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));   
+                   successMessage("The book has been successfully borrowed");
                 }
             }
+            else
+                errorMessage("Please select a user, a library and a book before proceeding");
         });
     }
     
@@ -258,14 +288,16 @@ public class MyLibrariesManager extends Application {
             selectionMenu.get("Select genre").setItems(null); // Used to make available the OnAction event every time the ComboBox is opened
             
             if (selectedLibrary != null)
-                selectionMenu.get("Select genre").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveGenres(selectedLibrary)));      
+                selectionMenu.get("Select genre").setItems(FXCollections.observableArrayList(LibrariesArchive.retrieveGenres(selectedLibrary)));  
+            else
+                errorMessage("Please select a library before proceeding");
         });
          
         selectionMenu.get("Select genre").setOnAction((Event event)->{
             Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
             Genre selectedGenre = (Genre) selectionMenu.get("Select genre").getValue();
             
-            if (selectedLibrary != null)
+            if (selectedLibrary != null && selectedGenre != null)
                 bookStatistics.updateStatisticsList(LibrariesArchive.retrieveMostBorrowedBooks(selectedLibrary, selectedGenre));
          }); 
     }
@@ -305,6 +337,14 @@ public class MyLibrariesManager extends Application {
             alert.close();
     }
     
+    private void successMessage(String message){
+        Alert alert = new Alert(AlertType.INFORMATION, message, ButtonType.OK);
+        alert.showAndWait();
+        
+        if (alert.getResult() == ButtonType.OK)
+            alert.close();
+    }
+    
     public void start(Stage stage){
         if (!LocalConfigurationParameters.retrieveLocalConfiguration()){
             errorMessage("An error occured while parsing the configuration file");
@@ -324,15 +364,10 @@ public class MyLibrariesManager extends Application {
         actionButton = new HashMap<>();
         descriptiveLabel = new HashMap<>();
         
-        interfaceVBox.getChildren().addAll(
-            new HBox(
-                150,
-                buildCreateAccountSection(),
-                buildUserAccountSection()),
-                buildMyBorrowingsSection(),
-                buildLibraryCatalogSection(),
-                buildStatisticsSection()
-            );
+        interfaceVBox.getChildren().addAll(new HBox(150, buildCreateAccountSection(), buildUserAccountSection()),
+                                           buildMyBorrowingsSection(),
+                                           buildLibraryCatalogSection(),
+                                           buildStatisticsSection());
         
         setComponentsLayout();
         setInterfaceEvents();
@@ -341,6 +376,9 @@ public class MyLibrariesManager extends Application {
         stage.setScene(new Scene(scrollRoot));
         stage.setTitle("MyLibrariesManager");
         stage.setMaximized(true);
+        
+        stage.setOnCloseRequest((WindowEvent evento)->{LibrariesArchive.closeConnection();});
+        
         stage.show();        
     }
     

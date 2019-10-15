@@ -47,6 +47,9 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     TableColumn<Borrowing, String> column4 = new TableColumn<>("Expiration Date");
     column4.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
     
+    TableColumn<Borrowing, String> column5 = new TableColumn<>("Return Date");
+    column5.setCellValueFactory(new PropertyValueFactory<>("returnDate"));
+    
     
     this.setPlaceholder(new Label("No rows to display"));
     
@@ -54,6 +57,7 @@ public class UserBorrowingsView extends TableView<Borrowing> {
     this.getColumns().add(column2);
     this.getColumns().add(column3);
     this.getColumns().add(column4);
+    this.getColumns().add(column5);
     
     this.setItems(observableBorrowingList);
   }
