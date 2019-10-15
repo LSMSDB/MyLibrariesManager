@@ -241,7 +241,7 @@ public class MyLibrariesManager extends Application {
                 String borrowingDate = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
                 String expirationDate = currentDatePlusTwoWeeks.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
                 
-                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "", expirationDate);
+                Borrowing newBorrowing = new Borrowing(0, selectedBook, borrowingDate, "00-00-00", expirationDate);
                 if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
                     errorMessage("An error occurred while returning the book. Please try again");
                 else{
