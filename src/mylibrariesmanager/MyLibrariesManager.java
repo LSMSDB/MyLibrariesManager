@@ -158,7 +158,12 @@ public class MyLibrariesManager extends Application {
                 else{
                      selectionMenu.get("Select user").setItems(null);
                      successMessage("Your account has been successfully deleted");
-                }
+                     userBorrowings.updateBorrowingList(new ArrayList<>());
+                     
+                     Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
+                     if(selectedLibrary != null)
+                        libraryCatalog.updateBookList(selectedLibrary.getCatalog());        
+                }       
             }else
                  errorMessage("Please select your account from the list");
         });
