@@ -1,6 +1,6 @@
 ﻿<Parameters>
     <connexion>
         <addressDBMS>localhost</addressDBMS>
-        <portDBMS>3306</portDBMS>
+        <portDBMS>6379</portDBMS>
     </connexion>
 </Parameters>
