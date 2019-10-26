@@ -23,4 +23,13 @@ public class Genre {
         return name.get();
     }
     
+    public boolean equals(Object otherGenre){  
+        if (otherGenre == this)
+            return true; 
+ 
+        if (!(otherGenre instanceof Genre))
+            return false; 
+ 
+    	return id.get() == ((Genre)otherGenre).getId();
+    }
 }
