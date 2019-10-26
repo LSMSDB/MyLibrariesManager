@@ -4,7 +4,7 @@
   <artifactId>MyLibrariesManager</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>MyLibrariesManager</name>
-  <description>MyLibrariesManager (LSMSDB project 0)</description>
+  <description>MyLibrariesManager</description>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
