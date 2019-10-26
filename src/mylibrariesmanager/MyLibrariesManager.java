@@ -194,7 +194,7 @@ public class MyLibrariesManager extends Application {
                 if (!LibrariesArchive.renewBorrowing(renewedBorrowing))
                     errorMessage("An error occurred while renewing the book. Please try again");
                 else{
-                     userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
+                     userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser));
                      successMessage("The book has been successfully renewed");
                 }
             }
@@ -225,13 +225,13 @@ public class MyLibrariesManager extends Application {
                 if(!LibrariesArchive.endBorrowing(expiredBorrowing))
                     errorMessage("An error occurred while returning the book. Please try again");
                 else{
-                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
+                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser));
                    
                    // Update of the library table. It is useful to show the new available state of the returned book 
                    // if the library selected is the book's one
                    Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
                    if ( selectedLibrary != null )
-                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));
+                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));
                    successMessage("The book has been successfully returned");
                 }
             }
@@ -277,8 +277,8 @@ public class MyLibrariesManager extends Application {
                 if(!LibrariesArchive.addBorrowing(selectedUser, newBorrowing))
                     errorMessage("An error occurred while borrowing the book. Please try again");
                 else{
-                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser.getId()));
-                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));   
+                   userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser));
+                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));   
                    successMessage("The book has been successfully borrowed");
                 }
             }
@@ -355,11 +355,9 @@ public class MyLibrariesManager extends Application {
             errorMessage("An error occured while parsing the configuration file");
             return;
         }
-        if (!LibrariesArchive.initializeConnection(LocalConfigurationParameters.getAddressDBMS(),
-                                                  LocalConfigurationParameters.getPortDBMS())){
-            errorMessage("An error occured while establishing a connection with the database");
-            return;
-        }
+        
+        LibrariesArchive.initializeConnectionParameters(LocalConfigurationParameters.getAddressDBMS(),
+                                                  		LocalConfigurationParameters.getPortDBMS());
               
         VBox interfaceVBox = new VBox(30);
         interfaceVBox.setPadding(new Insets(20, 10, 10, 20));
@@ -381,9 +379,7 @@ public class MyLibrariesManager extends Application {
         stage.setScene(new Scene(scrollRoot));
         stage.setTitle("MyLibrariesManager");
         stage.setMaximized(true);
-        
-        stage.setOnCloseRequest((WindowEvent evento)->{LibrariesArchive.closeConnection();});
-        
+                
         stage.show();        
     }
     

@@ -25,11 +25,11 @@ public class BookStatisticsView extends BarChart<String, Number> {
 		this.getData().add(serie);
 	}
 	
-	public void updateStatisticsList(List<BookStatistic> bookStatistics) {
+	public void updateStatisticsList(List<Book> bookList) {
 		this.getData().clear();
 		ObservableList<XYChart.Data<String, Number>> intermediate = FXCollections.synchronizedObservableList(FXCollections.observableList(new ArrayList<XYChart.Data<String, Number>>()));
-		for(int i=0 ; i < bookStatistics.size() ; i++) {
-			intermediate.add(new XYChart.Data<>(bookStatistics.get(i).getName(),bookStatistics.get(i).getNumberOfBorrowings()));
+		for(int i=0 ; i < bookList.size() ; i++) {
+			intermediate.add(new XYChart.Data<>(bookList.get(i).getTitle(),bookList.get(i).getNumberOfBorrowings()));
 		}
 		setObservableStatisticsList(intermediate);
 		XYChart.Series<String, Number> serie = new XYChart.Series<String, Number>();

@@ -9,9 +9,10 @@ public class Book {
     private final SimpleStringProperty edition;
     private final SimpleBooleanProperty available;
     private final Genre genre;
+    private final SimpleIntegerProperty numberOfBorrowings;
   
     public Book(int id, String title, String author, String edition,
-                boolean available, Genre genre){
+                boolean available, Genre genre, int numberOfBorrowings){
         
         this.id = new SimpleIntegerProperty(id);
         this.title = new SimpleStringProperty(title);
@@ -19,6 +20,7 @@ public class Book {
         this.edition = new SimpleStringProperty(edition);
         this.available = new SimpleBooleanProperty(available);
         this.genre = genre;
+        this.numberOfBorrowings = new SimpleIntegerProperty(numberOfBorrowings);
     }
     
     public int getId(){
@@ -43,6 +45,10 @@ public class Book {
     
     public Genre getGenre(){
         return genre;
+    }
+    
+    public int getNumberOfBorrowings() {
+    	return numberOfBorrowings.get();
     }
     
     public StringProperty nameProperty(){
