@@ -32,17 +32,40 @@ public class LibrariesArchive {
     }
     
     public static List<Library> retrieveLibraries(){
-    	return new ArrayList<>();
+      List<Library> libraryList = new ArrayList<>();
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int numOfLibraries = Integer.valueOf(archiveConnection.get(namespace + "library:id"));
+        
+        for(int i = 0; i < numOfLibraries; i++) {
+          String libraryKey = namespace + "library:" + i;
+          String libraryId = libraryKey + ":id";
+          
+          if (archiveConnection.get(libraryId) != null) {
+            String name = archiveConnection.get(libraryKey + ":name");
+            String address = archiveConnection.get(libraryKey + ":address");
+            List<Book> bookList = retrieveBooks(i);
+            
+            libraryList.add(new Library(i, name, address, bookList));
+          }
+        }
+       
+      }catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+      
+      
+    	return libraryList;
     }
         
-    public static List<Book> retrieveBooks(Library library){
+    public static List<Book> retrieveBooks(int libraryId){
     	List<Book> bookList = new ArrayList<>();
     	
     	try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
-    		String libraryCatalogKey = namespace + "library:" + library.getId() + ":catalog";
+    		String libraryCatalogKey = namespace + "library:" + libraryId + ":catalog";
     		List<String> bookIdList = archiveConnection.lrange(libraryCatalogKey, 0, -1);
     		
-    		for(String id : bookIdList){
+    		for(String id : bookIdList) {
     			String bookKey = namespace + "book:" + id + ":";
     			
     			int genreId = Integer.valueOf(archiveConnection.get(bookKey + "genre"));
@@ -70,7 +93,7 @@ public class LibrariesArchive {
     
     public static List<Genre> retrieveGenres(Library library){
     	List<Genre> genreList = new ArrayList<>();
-    	List<Book> bookList = retrieveBooks(library);
+    	List<Book> bookList = retrieveBooks(library.getId());
     		
     	for(Book book : bookList){
     		if (!genreList.contains(book.getGenre()))
@@ -181,7 +204,7 @@ public class LibrariesArchive {
     }
     
     public static List<Book> retrieveMostBorrowedBooks(Library library, Genre genre){
-    	List<Book> libraryBooks = retrieveBooks(library);
+    	List<Book> libraryBooks = retrieveBooks(library.getId());
     	List<Book> booksOfSelectedGenre = new ArrayList<>(); 
     	
     	for (Book book : libraryBooks){

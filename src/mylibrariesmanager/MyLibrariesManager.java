@@ -231,7 +231,7 @@ public class MyLibrariesManager extends Application {
                    // if the library selected is the book's one
                    Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
                    if ( selectedLibrary != null )
-                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));
+                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));
                    successMessage("The book has been successfully returned");
                 }
             }
@@ -278,7 +278,7 @@ public class MyLibrariesManager extends Application {
                     errorMessage("An error occurred while borrowing the book. Please try again");
                 else{
                    userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser));
-                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));   
+                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));   
                    successMessage("The book has been successfully borrowed");
                 }
             }
@@ -358,7 +358,8 @@ public class MyLibrariesManager extends Application {
         
         LibrariesArchive.initializeConnectionParameters(LocalConfigurationParameters.getAddressDBMS(),
                                                   		LocalConfigurationParameters.getPortDBMS());
-              
+        
+        
         VBox interfaceVBox = new VBox(30);
         interfaceVBox.setPadding(new Insets(20, 10, 10, 20));
         
