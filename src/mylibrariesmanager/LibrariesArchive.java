@@ -24,10 +24,37 @@ public class LibrariesArchive {
     }
     
     public static List<User> retrieveUsers(){
-    	return new ArrayList<>();
+      List<User> userList = new ArrayList<>();
+      List<Borrowing> borrowingList = new ArrayList<>();
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int numOfUsers = Integer.valueOf(archiveConnection.get(namespace + "user:id"));
+        
+        for(int i = 0; i < numOfUsers; i++) {
+          String userKey = namespace + "user:" + i;
+          String userId = userKey + ":id";
+          
+          if (archiveConnection.get(userId) != null) {
+            String name = archiveConnection.get(userKey + ":name");
+            String surname = archiveConnection.get(userKey + ":surname");
+            String address = archiveConnection.get(userKey + ":address");
+            String email = archiveConnection.get(userKey + ":email");
+            String phone = archiveConnection.get(userKey + ":phone");
+            
+
+            userList.add(new User(i, name, surname, address, email, phone, borrowingList));
+          }
+        }
+       
+      } catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+      
+      
+    	return userList;
     }
     
-    public static List<Borrowing> retrieveBorrowings(User user){
+    public static List<Borrowing> retrieveBorrowings(User user) {
     	return new ArrayList<>();
     }
     
