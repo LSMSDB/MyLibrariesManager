@@ -17,8 +17,59 @@ public class LibrariesArchive {
         maxTransactionAttempts = 10;
     }
        
-    public static boolean addUser(User user){
-        return true;
+    public static boolean addUser(User user) {
+      int transactionAttemptsCounter = 0;
+      boolean checkResult = false;
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int newUserId = -1;
+        
+        // Get the unique id for the new user
+        while(transactionAttemptsCounter < maxTransactionAttempts){ 
+            archiveConnection.watch(namespace + "user:id");
+            newUserId = Integer.valueOf(archiveConnection.get(namespace + "user:id"));
+            
+            System.out.println("NEW_USER" + newUserId);
+            
+            Transaction getIdTransaction = archiveConnection.multi();
+            getIdTransaction.incr(namespace + "user:id");
+            List<Object> result = getIdTransaction.exec();
+            
+            if (!result.isEmpty())  // Transaction succeeds
+                break;
+            
+            transactionAttemptsCounter++;
+        }
+        
+        if (transactionAttemptsCounter == maxTransactionAttempts)
+            return checkResult;
+        
+        String userKey = namespace + "user:" + newUserId + ":";
+      
+        
+        Transaction newUserTransaction = archiveConnection.multi();
+        newUserTransaction.set(userKey + "id", String.valueOf(newUserId));
+        newUserTransaction.set(userKey + "name", user.getName());
+        newUserTransaction.set(userKey + "surname", user.getSurname());
+        newUserTransaction.set(userKey + "address", user.getAddress());
+        newUserTransaction.set(userKey + "email", user.getEmail());
+        newUserTransaction.set(userKey + "phone", user.getPhone());
+        
+        List<Object> result = newUserTransaction.exec();
+        
+        if (result.isEmpty())   // Transaction fails
+            return checkResult;
+        
+        checkResult = true;
+        
+      }catch (JedisException exception) {
+          exception.printStackTrace();
+      }
+      
+      System.out.println("CHECK_RESULT::" + checkResult);
+    
+      return checkResult;
+      
     }
     
     public static boolean deleteUser(User user){
