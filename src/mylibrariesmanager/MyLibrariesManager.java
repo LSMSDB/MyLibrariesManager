@@ -231,7 +231,7 @@ public class MyLibrariesManager extends Application {
                    // if the library selected is the book's one
                    Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
                    if ( selectedLibrary != null )
-                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));
+                        libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));
                    successMessage("The book has been successfully returned");
                 }
             }
@@ -278,7 +278,7 @@ public class MyLibrariesManager extends Application {
                     errorMessage("An error occurred while borrowing the book. Please try again");
                 else{
                    userBorrowings.updateBorrowingList(LibrariesArchive.retrieveBorrowings(selectedUser));
-                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary.getId()));   
+                   libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));   
                    successMessage("The book has been successfully borrowed");
                 }
             }
