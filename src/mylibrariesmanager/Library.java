@@ -7,7 +7,7 @@ public class Library {
     private final SimpleIntegerProperty id;
     private final SimpleStringProperty name;
     private final SimpleStringProperty address;
-    private final List<Book> catalog;
+    private List<Book> catalog;
     
     public Library(int id, String name, String address, List<Book> catalog){
         
@@ -31,6 +31,10 @@ public class Library {
     
     public List<Book> getCatalog(){
         return catalog;
+    }
+    
+    public void setCatalog(List<Book> catalog){
+      this.catalog = catalog;
     }
     
     public String toString(){

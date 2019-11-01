@@ -17,42 +17,256 @@ public class LibrariesArchive {
         maxTransactionAttempts = 10;
     }
        
-    public static boolean addUser(User user){
-        return true;
+    public static boolean addUser(User user) {
+      int transactionAttemptsCounter = 0;
+      boolean checkResult = false;
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int newUserId = -1;
+        
+        // Get the unique id for the new user
+        while(transactionAttemptsCounter < maxTransactionAttempts){ 
+            archiveConnection.watch(namespace + "user:id");
+            newUserId = Integer.valueOf(archiveConnection.get(namespace + "user:id"));
+           
+            Transaction getIdTransaction = archiveConnection.multi();
+            getIdTransaction.incr(namespace + "user:id");
+            List<Object> result = getIdTransaction.exec();
+            
+            if (!result.isEmpty())  // Transaction succeeds
+                break;
+            
+            transactionAttemptsCounter++;
+        }
+        
+        if (transactionAttemptsCounter == maxTransactionAttempts)
+            return checkResult;
+        
+        String userKey = namespace + "user:" + newUserId + ":";
+      
+        
+        Transaction newUserTransaction = archiveConnection.multi();
+        newUserTransaction.set(userKey + "id", String.valueOf(newUserId));
+        newUserTransaction.set(userKey + "name", user.getName());
+        newUserTransaction.set(userKey + "surname", user.getSurname());
+        newUserTransaction.set(userKey + "address", user.getAddress());
+        newUserTransaction.set(userKey + "email", user.getEmail());
+        newUserTransaction.set(userKey + "phone", user.getPhone());
+        
+        List<Object> result = newUserTransaction.exec();
+        
+        if (result.isEmpty())   // Transaction fails
+            return checkResult;
+        
+        checkResult = true;
+        
+      }catch (JedisException exception) {
+          exception.printStackTrace();
+      }
+    
+      return checkResult;
+      
     }
     
-    public static boolean deleteUser(User user){
-        return true;
+    public static boolean deleteUser(User user) {
+      boolean deleted = false;
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)) {
+        String userKey = namespace + "user:" + user.getId();
+        String borrowingHistoryKey = namespace + "user:" + user.getId() + ":borrowings";
+        List<String> bookIdList = archiveConnection.lrange(borrowingHistoryKey, 0, -1);
+        Transaction deletingTransaction = archiveConnection.multi();        
+        
+        for(String id : bookIdList) {
+          String borrowingKey = namespace + "borrowing:" + id;
+          
+          deletingTransaction.del(borrowingKey + ":id");
+          deletingTransaction.del(borrowingKey + ":borrowedBook");
+          deletingTransaction.del(borrowingKey + ":borrowingDate");
+          deletingTransaction.del(borrowingKey + ":returnDate");
+          deletingTransaction.del(borrowingKey + ":expirationDate");
+        }
+                
+        deletingTransaction.del(userKey + ":id");
+        deletingTransaction.del(userKey + ":name");
+        deletingTransaction.del(userKey + ":surname");
+        deletingTransaction.del(userKey + ":address");
+        deletingTransaction.del(userKey + ":email");
+        deletingTransaction.del(userKey + ":phone");
+        deletingTransaction.del(userKey + ":borrowings");
+        
+        List<Object> result = deletingTransaction.exec();
+        
+        if (result.isEmpty()) // Transaction fails
+            return deleted;
+        
+        deleted = true;
+        
+      } catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+        
+      return deleted;
     }
     
-    public static List<User> retrieveUsers(){
-        return new ArrayList<>();
+    public static List<User> retrieveUsers() {
+      List<User> userList = new ArrayList<>();
+      List<Borrowing> borrowingList = new ArrayList<>();
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int numOfUsers = Integer.valueOf(archiveConnection.get(namespace + "user:id"));
+        
+        for(int i = 0; i < numOfUsers; i++) {
+          String userKey = namespace + "user:" + i;
+          String userId = userKey + ":id";
+          
+          if (archiveConnection.get(userId) != null) {
+            String name = archiveConnection.get(userKey + ":name");
+            String surname = archiveConnection.get(userKey + ":surname");
+            String address = archiveConnection.get(userKey + ":address");
+            String email = archiveConnection.get(userKey + ":email");
+            String phone = archiveConnection.get(userKey + ":phone");
+           
+            userList.add(new User(i, name, surname, address, email, phone, borrowingList));
+          }
+        }
+       
+      } catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+      
+      
+    	return userList;
+
     }
     
-    public static List<Borrowing> retrieveBorrowings(User user){
-        return new ArrayList<>();
+    public static List<Borrowing> retrieveBorrowings(User user) {
+      List<Borrowing> borrowingList = new ArrayList<>();
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        String userBorrowingsKey = namespace + "user:" + user.getId() + ":borrowings";
+        List<String> borrowingsIdList = archiveConnection.lrange(userBorrowingsKey, 0, -1);
+        
+        for(String id : borrowingsIdList) {
+          String borrowingKey = namespace + "borrowing:" + id;
+          String borrowingId = borrowingKey + ":id"; 
+          
+          if (archiveConnection.get(borrowingId) != null) {
+            String borrowedBookId = archiveConnection.get(borrowingKey + ":borrowedBook");
+            String borrowingDate = archiveConnection.get(borrowingKey + ":borrowingDate");
+            String returnDate = archiveConnection.get(borrowingKey + ":returnDate");
+            String expirationDate = archiveConnection.get(borrowingKey + ":expirationDate");
+            Book borrowedBook = retrieveBook(borrowedBookId); 
+            
+            borrowingList.add(new Borrowing(
+                Integer.valueOf(id),
+                borrowedBook,
+                borrowingDate,
+                returnDate,
+                expirationDate
+            ));
+          }
+        }
+          
+
+      } catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+    	
+      return borrowingList;
+    }
+   
+    
+    public static Book retrieveBook(String id) {
+      Book book = null;
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)) {
+        String bookKey = namespace + "book:" + id;
+        String bookId = bookKey + ":id"; 
+        
+        if (archiveConnection.get(bookId) != null) {
+          String title = archiveConnection.get(bookKey + ":title");
+          String author = archiveConnection.get(bookKey + ":author");
+          String edition = archiveConnection.get(bookKey + ":edition");
+          String available = archiveConnection.get(bookKey + ":available");
+          String genre = archiveConnection.get(bookKey + ":genre");
+          String genreKey = namespace + "genre:" + id;
+          String genreId = genreKey + ":id";
+          Genre bookGenre = null;
+          
+          if (archiveConnection.get(genreId) != null) {
+            String name = archiveConnection.get(bookKey + ":name");
+            
+            bookGenre = new Genre(
+                Integer.valueOf(genre),
+                name
+            );
+          }
+
+          String numberOfBorrowings = archiveConnection.get(bookKey + ":numberOfBorrowings");
+          
+          return new Book(
+              Integer.valueOf(id),
+              title,
+              author,
+              edition,
+              available.equals("1"),
+              bookGenre,
+              Integer.valueOf(numberOfBorrowings)
+          ); 
+        }   
+      } catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+      
+      return book;
     }
     
     public static List<Library> retrieveLibraries(){
-        return new ArrayList<>();
+      List<Library> libraryList = new ArrayList<>();
+      
+      try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+        int numOfLibraries = Integer.valueOf(archiveConnection.get(namespace + "library:id"));
+        
+        for(int i = 0; i < numOfLibraries; i++) {
+          String libraryKey = namespace + "library:" + i;
+          String libraryId = libraryKey + ":id";
+          
+          if (archiveConnection.get(libraryId) != null) {
+            String name = archiveConnection.get(libraryKey + ":name");
+            String address = archiveConnection.get(libraryKey + ":address");
+            Library library = new Library(i, name, address, null); 
+            List<Book> bookList = retrieveBooks(library);
+            
+            library.setCatalog(bookList);
+            libraryList.add(library);
+          }
+        }
+       
+      }catch (JedisException exception) {
+        exception.printStackTrace();
+      }
+      
+      
+    	return libraryList;
     }
         
     public static List<Book> retrieveBooks(Library library){
-        List<Book> bookList = new ArrayList<>();
-        
-        try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
-            String libraryCatalogKey = namespace + "library:" + library.getId() + ":catalog";
-            List<String> bookIdList = archiveConnection.lrange(libraryCatalogKey, 0, -1);
-            
-            for(String id : bookIdList){
-                String bookKey = namespace + "book:" + id + ":";
-                
-                int genreId = Integer.valueOf(archiveConnection.get(bookKey + "genre"));
-                String genreKey = namespace + "genre:" + genreId + ":";
-                
-                boolean bookAvailable = false;
-                if (archiveConnection.get(bookKey + "available").equals("1"))
-                    bookAvailable = true;
+    	List<Book> bookList = new ArrayList<>();
+    	
+    	try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)){
+    		String libraryCatalogKey = namespace + "library:" + library.getId() + ":catalog";
+    		List<String> bookIdList = archiveConnection.lrange(libraryCatalogKey, 0, -1);
+    		
+    		for(String id : bookIdList) {
+    			String bookKey = namespace + "book:" + id + ":";
+    			
+    			int genreId = Integer.valueOf(archiveConnection.get(bookKey + "genre"));
+    			String genreKey = namespace + "genre:" + genreId + ":";
+    			
+    			boolean bookAvailable = false;
+    			if (archiveConnection.get(bookKey + "available").equals("1"))
+    				bookAvailable = true;
+
 
                 bookList.add(new Book(Integer.valueOf(id),
                                       archiveConnection.get(bookKey + "title"),
@@ -182,24 +396,25 @@ public class LibrariesArchive {
     }
     
     public static List<Book> retrieveMostBorrowedBooks(Library library, Genre genre){
-        List<Book> libraryBooks = retrieveBooks(library);
-        List<Book> booksOfSelectedGenre = new ArrayList<>(); 
-        
-        for (Book book : libraryBooks){
-            if (book.getGenre().equals(genre))
-                booksOfSelectedGenre.add(book);
-        }
-        
-        Collections.sort(booksOfSelectedGenre, new Comparator<Book>(){
-            public int compare(Book b1, Book b2) {
-                return Integer.compare(b1.getNumberOfBorrowings(), b2.getNumberOfBorrowings());
-            }
-        });
-        
-        Collections.reverse(booksOfSelectedGenre);  // Sorted by decreasing value
-        
-        List<Book> mostBorrowedBooks = new ArrayList<Book>(booksOfSelectedGenre.subList(0, Integer.min(booksOfSelectedGenre.size(), 10)));
-        return mostBorrowedBooks;
+    	List<Book> libraryBooks = retrieveBooks(library);
+    	List<Book> booksOfSelectedGenre = new ArrayList<>(); 
+    	
+    	for (Book book : libraryBooks){
+    		if (book.getGenre().equals(genre))
+    			booksOfSelectedGenre.add(book);
+    	}
+    	
+    	Collections.sort(booksOfSelectedGenre, new Comparator<Book>(){
+    	    public int compare(Book b1, Book b2) {
+    	        return Integer.compare(b1.getNumberOfBorrowings(), b2.getNumberOfBorrowings());
+    	    }
+    	});
+    	
+    	Collections.reverse(booksOfSelectedGenre);  // Sorted by decreasing value
+    	
+    	List<Book> mostBorrowedBooks = new ArrayList<Book>(booksOfSelectedGenre.subList(0, 10));
+    	return mostBorrowedBooks;
+
     }
     
 }    

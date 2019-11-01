@@ -358,7 +358,8 @@ public class MyLibrariesManager extends Application {
         
         LibrariesArchive.initializeConnectionParameters(LocalConfigurationParameters.getAddressDBMS(),
                                                   		LocalConfigurationParameters.getPortDBMS());
-              
+        
+        
         VBox interfaceVBox = new VBox(30);
         interfaceVBox.setPadding(new Insets(20, 10, 10, 20));
         
