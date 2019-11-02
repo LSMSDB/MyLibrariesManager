@@ -162,7 +162,7 @@ public class MyLibrariesManager extends Application {
                      
                      Library selectedLibrary = (Library) selectionMenu.get("Select library").getValue();
                      if(selectedLibrary != null)
-                        libraryCatalog.updateBookList(selectedLibrary.getCatalog());        
+                    	 libraryCatalog.updateBookList(LibrariesArchive.retrieveBooks(selectedLibrary));       
                 }       
             }else
                  errorMessage("Please select your account from the list");

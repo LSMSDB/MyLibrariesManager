@@ -74,18 +74,30 @@ public class LibrariesArchive {
       try(Jedis archiveConnection = new Jedis(archiveAddress, archivePort)) {
         String userKey = namespace + "user:" + user.getId();
         String borrowingHistoryKey = namespace + "user:" + user.getId() + ":borrowings";
-        List<String> bookIdList = archiveConnection.lrange(borrowingHistoryKey, 0, -1);
-        Transaction deletingTransaction = archiveConnection.multi();        
         
-        for(String id : bookIdList) {
+        List<String> borrowingList = archiveConnection.lrange(borrowingHistoryKey, 0, -1);
+        List<String> borrowedBookList = new ArrayList<>();
+       
+        // Retrieve the id of borrowed books to be used inside the transaction to make them
+        // available again if they are not returned at the moment of the deletion
+        for(String id : borrowingList)
+          borrowedBookList.add(archiveConnection.get(namespace + "borrowing:" + id + ":borrowedBook"));
+        
+        // Deleting transaction
+        Transaction deletingTransaction = archiveConnection.multi();
+        
+        for(String id : borrowingList) {
           String borrowingKey = namespace + "borrowing:" + id;
-          
+                    
           deletingTransaction.del(borrowingKey + ":id");
           deletingTransaction.del(borrowingKey + ":borrowedBook");
           deletingTransaction.del(borrowingKey + ":borrowingDate");
           deletingTransaction.del(borrowingKey + ":returnDate");
           deletingTransaction.del(borrowingKey + ":expirationDate");
         }
+        
+        for(String bookId : borrowedBookList)
+          deletingTransaction.set(namespace + "book:" + bookId + ":available", "1");	
                 
         deletingTransaction.del(userKey + ":id");
         deletingTransaction.del(userKey + ":name");
@@ -127,6 +139,7 @@ public class LibrariesArchive {
             String email = archiveConnection.get(userKey + ":email");
             String phone = archiveConnection.get(userKey + ":phone");
            
+            borrowingList = retrieveBorrowings(new User(i, name, surname, address, email, phone, borrowingList));
             userList.add(new User(i, name, surname, address, email, phone, borrowingList));
           }
         }
@@ -412,7 +425,7 @@ public class LibrariesArchive {
     	
     	Collections.reverse(booksOfSelectedGenre);  // Sorted by decreasing value
     	
-    	List<Book> mostBorrowedBooks = new ArrayList<Book>(booksOfSelectedGenre.subList(0, 10));
+    	List<Book> mostBorrowedBooks = new ArrayList<Book>(booksOfSelectedGenre.subList(0, Integer.min(booksOfSelectedGenre.size(), 10)));
     	return mostBorrowedBooks;
 
     }
