@@ -202,12 +202,12 @@ public class LibrariesArchive {
           String edition = archiveConnection.get(bookKey + ":edition");
           String available = archiveConnection.get(bookKey + ":available");
           String genre = archiveConnection.get(bookKey + ":genre");
-          String genreKey = namespace + "genre:" + id;
+          String genreKey = namespace + "genre:" + genre;
           String genreId = genreKey + ":id";
           Genre bookGenre = null;
           
           if (archiveConnection.get(genreId) != null) {
-            String name = archiveConnection.get(bookKey + ":name");
+            String name = archiveConnection.get(genreKey + ":name");
             
             bookGenre = new Genre(
                 Integer.valueOf(genre),
